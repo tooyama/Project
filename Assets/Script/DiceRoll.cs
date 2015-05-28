@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
-
+//テスト
 public class DiceRoll : MonoBehaviour 
 {
     public Vector3 move = new Vector3(-10,0,0);
