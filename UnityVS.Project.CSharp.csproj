@@ -60,12 +60,6 @@
     <Reference Include="UnityEngine.Analytics">
       <HintPath>Library\UnityAssemblies\UnityEngine.Analytics.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.Networking">
-      <HintPath>Library\UnityAssemblies\UnityEngine.Networking.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>Library\UnityAssemblies\UnityEngine.UI.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEditor.iOS.Extensions.Xcode">
       <HintPath>Library\UnityAssemblies\UnityEditor.iOS.Extensions.Xcode.dll</HintPath>
     </Reference>
@@ -76,7 +70,9 @@
     <Compile Include="Assets\Dice\Scripts\Dice\Die_d10.cs" />
     <Compile Include="Assets\Dice\Scripts\Dice\Die_d6.cs" />
     <Compile Include="Assets\Dice\scenes\Demo\AppDemo.cs" />
+    <Compile Include="Assets\Script\CardSlide.cs" />
     <Compile Include="Assets\Script\DiceRoll.cs" />
+    <Compile Include="Assets\Script\ViewCard.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Dice\-Read-Me-.txt" />
