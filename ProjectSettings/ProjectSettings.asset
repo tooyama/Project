@@ -5,7 +5,7 @@ PlayerSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 7
   AndroidProfiler: 0
-  defaultScreenOrientation: 0
+  defaultScreenOrientation: 3
   targetDevice: 2
   targetResolution: 0
   accelerometerFrequency: 60
@@ -77,7 +77,7 @@ PlayerSettings:
   metroEnableIndependentInputSource: 0
   metroEnableLowLatencyPresentationAPI: 0
   xboxOneDisableKinectGpuReservation: 0
-  virtualRealitySupported: 0
+  virtualRealitySupported: 1
   productGUID: 3ca1b85bd22a8c949a4c7ea1ed9c369e
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 9
