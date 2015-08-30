@@ -43,7 +43,7 @@ public class Die : MonoBehaviour {
     {
         get
         {
-            return !(GetComponent<Rigidbody>().velocity.sqrMagnitude < .1F && GetComponent<Rigidbody>().angularVelocity.sqrMagnitude < .1F);
+            return !(GetComponent<Rigidbody>().velocity.sqrMagnitude * 100000 < .1F && GetComponent<Rigidbody>().angularVelocity.sqrMagnitude * 100000 < .1F);
         }
     }
 
@@ -69,7 +69,7 @@ public class Die : MonoBehaviour {
     }
 
 	// calculate this die's value
-    void GetValue()
+    public void GetValue()
     {
 		// value = 0 -> undetermined or invalid
         value = 0;
@@ -109,7 +109,8 @@ public class Die : MonoBehaviour {
     void Update()
     {
 		// determine the value is the die is not rolling
-        if (!rolling && localHit)
+//		Debug.Log (GetComponent<Rigidbody> ().velocity.sqrMagnitude * 1000  + " | " + GetComponent<Rigidbody> ().angularVelocity.sqrMagnitude * 1000 + " | " + rolling);
+		if (!rolling && localHit)
             GetValue();
     }
 

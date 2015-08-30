@@ -12,9 +12,9 @@ public class ViewCard : MonoBehaviour
 	
 	void Update () 
     {
-	    if (Input.GetMouseButtonDown(0))
+/*	    if (Input.GetMouseButtonDown(0))
         {
             cardText.SetActive(!cardText.activeSelf);
         }
-	}
+*/	}
 }
