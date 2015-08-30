@@ -5,7 +5,7 @@ public class SHManeger : MonoBehaviour {
 
 	public int gameStatus;
 
-	public GameObject d4,d6,dicePanel,PlayerPanels,Monster;
+	public GameObject d4,d6,dicePanel,PlayerPanels,Monster,EffectPanels,Enemy;
 
 	int d4Value,d6Value,greenCount,whiteCount,blackCount;
 
@@ -14,7 +14,9 @@ public class SHManeger : MonoBehaviour {
 	int[] whiteCards = new int[15];
 	int[] blackCards = new int[16];
 
-	GameObject[] greens,whites,blacks;
+	GameObject[] greens,whites,blacks,effects;
+
+	Transform[] panelPositions;
 
 	
 	// Use this for initialization
@@ -43,6 +45,54 @@ public class SHManeger : MonoBehaviour {
 		foreach (GameObject card in blacks) {
 			card.SetActive(false);
 		}
+
+
+		Transform[] tmp = PlayerPanels.GetComponentsInChildren<Transform>();
+		panelPositions = new Transform[tmp.Length - 1];
+		for (int i = 0; i<panelPositions.Length; i++) {
+			panelPositions[i] = tmp[i+1];
+		}
+		for (int i = 0; i<panelPositions.Length-1; i++) {
+			for(int j = i+1;j<panelPositions.Length;j++){
+				int pi,pj;
+				pi = int.Parse(panelPositions[i].name.Substring(6));
+				pj = int.Parse(panelPositions[j].name.Substring(6));
+				if(pi>pj){
+					Transform temp = panelPositions[i];
+					panelPositions[i] = panelPositions[j];
+					panelPositions[j] = temp;
+				}
+			}
+		}
+
+		for (int i  =0; i<panelPositions.Length; i++) {
+			Debug.Log(panelPositions[i].name);
+		}
+
+		effects = GameObject.FindGameObjectsWithTag("effectPanel");
+
+		for (int i = 0; i<effects.Length-1; i++) {
+			for(int j = i+1;j<effects.Length;j++){
+				int ei,ej;
+				ei = int.Parse(effects[i].name.Substring(5));
+				ej = int.Parse(effects[j].name.Substring(5));
+				if(ei>ej){
+					GameObject temp = effects[i];
+					effects[i] = effects[j];
+					effects[j] = temp;
+				}
+			}
+		}
+		for (int i  =0; i<effects.Length; i++) {
+			Debug.Log (effects[i]);
+		}
+
+		for (int i = 0; i<stages.Length; i++) {
+			Vector3 v3 = panelPositions[stages[i]].position;
+			v3.y += 0.2f;
+			effects[i].transform.position = v3;
+		}
+
 	}
 
 	void randomize(int[] array){
@@ -73,37 +123,41 @@ public class SHManeger : MonoBehaviour {
 			Debug.Log ("case 2 start");
 			int moveStatus = d6Value + d4Value;
 			Debug.Log (d6Value + " | " + d4Value);
+			Debug.Log (moveStatus);
 
-			Transform[] panelPositions = PlayerPanels.GetComponentsInChildren<Transform>();
-			Transform panelRoot = PlayerPanels.GetComponent<Transform>();
+
 
 			if(moveStatus <= 3){
-				Monster.transform.position = panelPositions[1].position;
+				Monster.transform.position = panelPositions[stages[0]].position;
 				drawGreenCard();
 			}else if(moveStatus <= 5){
-				Monster.transform.position = panelPositions[2].position;
+				Monster.transform.position = panelPositions[stages[1]].position;
 				drawFreeCard();
 			}else if(moveStatus <= 6){
-				Monster.transform.position = panelPositions[3].position;
+				Monster.transform.position = panelPositions[stages[2]].position;
 				drawWhiteCard();
 			}else if(moveStatus <= 7){
 //				Monster.transform.Translate(panelPositions[0].localPosition);
 				Debug.Log (moveStatus);
 			}else if(moveStatus <= 8){
-				Monster.transform.position = panelPositions[4].position;
+				Monster.transform.position = panelPositions[stages[3]].position;
 				drawBlackCard();
 			}else if(moveStatus <= 9){
-				Monster.transform.position = panelPositions[5].position;
+				Monster.transform.position = panelPositions[stages[4]].position;
 				hopeAndDespair();
 			}else if(moveStatus <= 10){
-				Monster.transform.position = panelPositions[6].position;
+				Monster.transform.position = panelPositions[stages[5]].position;
 				altar();
 			}
 			Debug.Log ("move finished");
-			ChangeGameStatus(3);
 			break;
 
 		case 3:
+			/* 攻撃の処理 */
+			/* 自エリアと隣エリアに居るキャラを抽出 */
+			/* 攻撃対象キャラを選択(攻撃しないも可)*/
+			/* 攻撃(dice roll) */
+			/* ダメージ処理 */
 
 			break;
 		}
@@ -117,6 +171,7 @@ public class SHManeger : MonoBehaviour {
 		greenCount++;
 		if (greenCount == greenCards.Length)
 			randomize (greenCards);
+		ChangeGameStatus(3);
 	}
 	void drawWhiteCard(){
 		whites [whiteCards [whiteCount]].SetActive (true);
@@ -126,6 +181,7 @@ public class SHManeger : MonoBehaviour {
 		whiteCount++;
 		if (whiteCount == whiteCards.Length)
 			randomize (whiteCards);
+		ChangeGameStatus(3);
 	}
 	void drawBlackCard(){
 		blacks [blackCards [blackCount]].SetActive (true);
@@ -135,12 +191,16 @@ public class SHManeger : MonoBehaviour {
 		blackCount++;
 		if (blackCount == blackCards.Length)
 			randomize (blackCards);
+		ChangeGameStatus(3);
 	}
 	void drawFreeCard(){
+		ChangeGameStatus(3);
 	}
 	void hopeAndDespair(){
+		ChangeGameStatus(3);
 	}
 	void altar(){
+		ChangeGameStatus(3);
 	}
 
 	IEnumerator getDiceValue(){
