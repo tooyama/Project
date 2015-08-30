@@ -7,27 +7,54 @@ public class SHManeger : MonoBehaviour {
 
 	public GameObject d4,d6,dicePanel,PlayerPanels,Monster;
 
-	int d4Value,d6Value;
+	int d4Value,d6Value,greenCount,whiteCount,blackCount;
 
 	int[] stages = new int[6];
+	int[] greenCards = new int[16];
+	int[] whiteCards = new int[15];
+	int[] blackCards = new int[16];
 
+	GameObject[] greens,whites,blacks;
 
+	
 	// Use this for initialization
 	void Start () {
+		setStage ();
 		ChangeGameStatus (0);
 	}
 
 	void setStage(){
-		for (int i = 0; i<6; i++) {
-			stages [i] = i;
+		randomize (stages);
+		randomize (greenCards);
+		randomize (whiteCards);
+		randomize (blackCards);
+		greenCount = 0;
+		whiteCount = 0;
+		blackCount = 0;
+		greens = GameObject.FindGameObjectsWithTag("greenCard");
+		foreach (GameObject card in greens) {
+			card.SetActive(false);
 		}
-		for (int i = 0; i<stages.Length; i++) {
-			int temp = stages[i];
-			int randomIndex = Random.Range(0,stages.Length);
-			stages[i] = stages[randomIndex];
-			stages[randomIndex] = temp;
+		whites = GameObject.FindGameObjectsWithTag("whiteCard");
+		foreach (GameObject card in whites) {
+			card.SetActive(false);
 		}
+		blacks = GameObject.FindGameObjectsWithTag("blackCard");
+		foreach (GameObject card in blacks) {
+			card.SetActive(false);
+		}
+	}
 
+	void randomize(int[] array){
+		for (int i = 0; i<array.Length; i++) {
+			array[i] = i;
+		}
+		for (int i = 0; i<array.Length; i++) {
+			int temp = array[i];
+			int randomIndex = Random.Range (0,array.Length);
+			array[i] = array[randomIndex];
+			array[randomIndex] = temp;
+		}
 	}
 
 	public void ChangeGameStatus(int status){
@@ -52,19 +79,25 @@ public class SHManeger : MonoBehaviour {
 
 			if(moveStatus <= 3){
 				Monster.transform.position = panelPositions[1].position;
+				drawGreenCard();
 			}else if(moveStatus <= 5){
 				Monster.transform.position = panelPositions[2].position;
+				drawFreeCard();
 			}else if(moveStatus <= 6){
 				Monster.transform.position = panelPositions[3].position;
+				drawWhiteCard();
 			}else if(moveStatus <= 7){
 //				Monster.transform.Translate(panelPositions[0].localPosition);
 				Debug.Log (moveStatus);
 			}else if(moveStatus <= 8){
 				Monster.transform.position = panelPositions[4].position;
+				drawBlackCard();
 			}else if(moveStatus <= 9){
 				Monster.transform.position = panelPositions[5].position;
+				hopeAndDespair();
 			}else if(moveStatus <= 10){
 				Monster.transform.position = panelPositions[6].position;
+				altar();
 			}
 			Debug.Log ("move finished");
 			ChangeGameStatus(3);
@@ -74,6 +107,40 @@ public class SHManeger : MonoBehaviour {
 
 			break;
 		}
+	}
+
+	void drawGreenCard(){
+		greens [greenCards [greenCount]].SetActive (true);
+		/* オババカードの各効果 */
+		switch (greenCards [greenCount]) {
+		}
+		greenCount++;
+		if (greenCount == greenCards.Length)
+			randomize (greenCards);
+	}
+	void drawWhiteCard(){
+		whites [whiteCards [whiteCount]].SetActive (true);
+		/* 白カードの各効果 */
+		switch (whiteCards [whiteCount]) {
+		}
+		whiteCount++;
+		if (whiteCount == whiteCards.Length)
+			randomize (whiteCards);
+	}
+	void drawBlackCard(){
+		blacks [blackCards [blackCount]].SetActive (true);
+		/* 白カードの各効果 */
+		switch (blackCards [blackCount]) {
+		}
+		blackCount++;
+		if (blackCount == blackCards.Length)
+			randomize (blackCards);
+	}
+	void drawFreeCard(){
+	}
+	void hopeAndDespair(){
+	}
+	void altar(){
 	}
 
 	IEnumerator getDiceValue(){
@@ -91,6 +158,13 @@ public class SHManeger : MonoBehaviour {
 		dicePanel.SetActive(false);
 		Debug.Log ("case1 finish");
 		ChangeGameStatus (2);
+	}
+
+	IEnumerator waitingClick(){
+		while (true) {
+			if(Input.GetMouseButton(0)) break;
+			yield return null;
+		}
 	}
 	
 	void dicesActivate(bool flag){
