@@ -8,6 +8,9 @@ TagManager:
   - greenCard
   - blackCard
   - effectPanel
+  - drawButton
+  - attackButton
+  - stageButton
   layers:
   - Default
   - TransparentFX
