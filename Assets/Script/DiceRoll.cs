@@ -20,6 +20,8 @@ public class DiceRoll : MonoBehaviour
     
 	void diceRoll()
     {
+		Debug.Log ("diceroll start");
+
         Rigidbody[] rigidArray = gameObject.GetComponentsInChildren<Rigidbody>();
 
 		foreach (Rigidbody rigid in rigidArray){
@@ -30,7 +32,12 @@ public class DiceRoll : MonoBehaviour
 			tempMove.z += Random.Range (-10, 100);
 			rigid.AddForce(tempMove);
         }
-		Invoke ("changeSHGameStatus", .1f);
+
+		Debug.Log ("force added");
+
+		Invoke ("changeSHGameStatus", .2f);
+
+		Debug.Log ("css invoke");
         //gameObject.GetComponent<Rigidbody>().WakeUp();
     }
 
@@ -39,6 +46,7 @@ public class DiceRoll : MonoBehaviour
 		int gameStatus = shm.gameStatus + 1;
 		Debug.Log (gameStatus);
 		if(gameStatus == 1) shm.ChangeGameStatus (gameStatus);
+		if(gameStatus == 4) shm.getAttackValue ();
 	}
 
 	void FixedUpdate () 

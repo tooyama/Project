@@ -11,6 +11,9 @@ TagManager:
   - drawButton
   - attackButton
   - stageButton
+  - hpPanel
+  - playerState
+  - Monster
   layers:
   - Default
   - TransparentFX

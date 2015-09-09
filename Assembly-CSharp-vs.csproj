@@ -51,10 +51,12 @@
      <Compile Include="Assets\Dice\Scripts\Dice\Die_d10.cs" />
      <Compile Include="Assets\Dice\Scripts\Dice\Die_d6.cs" />
      <Compile Include="Assets\Dice\scenes\Demo\AppDemo.cs" />
+     <Compile Include="Assets\PlayerStateManager.cs" />
      <Compile Include="Assets\Script\CardSlide.cs" />
      <Compile Include="Assets\Script\DiceRoll.cs" />
      <Compile Include="Assets\Script\SHManeger.cs" />
      <Compile Include="Assets\Script\ViewCard.cs" />
+     <Compile Include="Assets\buttonsController.cs" />
      <None Include="Assets\Dice\-Read-Me-.txt" />
  <Reference Include="UnityEngine.UI">
  <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>

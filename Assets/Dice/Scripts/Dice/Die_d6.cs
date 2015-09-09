@@ -34,7 +34,7 @@ public class Die_d6 : Die {
         }
         return Vector3.zero;
     }
-		
+
 }
 
 
