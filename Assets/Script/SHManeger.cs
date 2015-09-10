@@ -5,6 +5,8 @@ public class SHManeger : MonoBehaviour {
 
 	public int gameStatus;
 
+	public static int playerNum = 5;
+
 	public GameObject d4,d6,diceButton,PlayerPanels,Monster,EffectPanels,Enemy,buttonPanel;
 
 	int d4Value,d6Value,greenCount,whiteCount,blackCount;
@@ -20,10 +22,12 @@ public class SHManeger : MonoBehaviour {
 
 	Transform[] panelPositions;
 
-	int[] playersPositions = new int[2];
+	int[] playersPositions = new int[playerNum];
+	bool[] playerExists = new bool[playerNum];
 
 	int playerId,attackTarget;
-	
+
+
 	// Use this for initialization
 	void Start () {
 		setStage ();
@@ -188,35 +192,20 @@ public class SHManeger : MonoBehaviour {
 			break;
 		case 3:
 			/* 攻撃の処理 */
-			bool[] playerExists = new bool[2];
-			for(int i = 0;i<playerExists.Length;i++){
-				playerExists[i] = false;
-			}
-			for(int i = 0;i<playersPositions.Length;i++){
-				if(i != playerId && playersPositions[i]/2 == playersPositions[playerId]/2){
-//					playerExist = true;
-					playerExists[i] = true;
-				}
-			}
+			checkPlayerExist();
 			buttonPanel.SetActive(true);
 			attackButtons[0].SetActive(true);
 
-//			playerExist = true;
 			for(int i = 0;i<playerExists.Length;i++){
 				if(playerExists[i]){
 					attackButtons[i+1].SetActive(true);
 				}
 			}
-/*			if(playerExist){
-				for(int i = 1;i<attackButtons.Length;i++){
-					attackButtons[i].SetActive(true);
-				}
-			}*/
 			break;
 		case 4:
 			Debug.Log ("finished");
 			playerId++;
-			playerId = playerId%2;
+			playerId = playerId%playerNum;
 			ChangeGameStatus(0);
 			break;
 		}
@@ -381,6 +370,17 @@ public class SHManeger : MonoBehaviour {
 		playerStates [attackTarget].GetComponent<PlayerStateManager>().moveScore (tmpScore);
 		ChangeGameStatus (4);
 	}
+
+	public void checkPlayerExist(){
+		for(int i = 0;i<playerExists.Length;i++){
+			playerExists[i] = false;
+		}
+		for(int i = 0;i<playersPositions.Length;i++){
+			if(i != playerId && playersPositions[i]/2 == playersPositions[playerId]/2){
+				playerExists[i] = true;
+			}
+		}
+	}
 	
 
 	IEnumerator getDiceValue(){
@@ -394,7 +394,6 @@ public class SHManeger : MonoBehaviour {
 		Debug.Log ("d6:" + d6Value + " d4:" + d4Value);
 		d4Value = d4Value % 4 + 1;
 		dicesActivate (false);
-		Debug.Log (gameStatus);
 		if (gameStatus == 1) {
 			ChangeGameStatus (2);
 		} else if (gameStatus == 3) {
