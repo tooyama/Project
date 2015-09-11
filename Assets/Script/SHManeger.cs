@@ -179,8 +179,14 @@ public class SHManeger : MonoBehaviour {
 
 		switch (status) {
 		case 0:
-			/* ダイスのアクティブ化 */
-			dicesActivate (true);
+			if(playerId != 0){
+				d4Value = Random.Range(1,4);
+				d6Value = Random.Range(1,6);
+				ChangeGameStatus(2);
+			}else{
+				/* ダイスのアクティブ化 */
+				dicesActivate (true);
+			}
 			break;
 		case 1:
 			/* ダイスの値取得 */
@@ -193,12 +199,34 @@ public class SHManeger : MonoBehaviour {
 		case 3:
 			/* 攻撃の処理 */
 			checkPlayerExist();
-			buttonPanel.SetActive(true);
-			attackButtons[0].SetActive(true);
+			if(playerId != 0){
+				int existCount = 0;
+				for(int i = 0;i < playerExists.Length;i++){
+					if(playerExists[i]) existCount++;
+				}
+				int attackSelect = Random.Range(0,existCount);
+				if(attackSelect == 0){
+					ChangeGameStatus(4);
+				}else{
+					for(int i = 0;i < playerExists.Length;i++){
+						if(playerExists[i]) attackSelect--;
+						if(attackSelect == 0){
+							attackTarget = i;
+							d4Value = Random.Range(1,4);
+							d6Value = Random.Range(1,6);
+							attackEnemy();
+							break;
+						}
+					}
+				}
+			}else{
+				buttonPanel.SetActive(true);
+				attackButtons[0].SetActive(true);
 
-			for(int i = 0;i<playerExists.Length;i++){
-				if(playerExists[i]){
-					attackButtons[i+1].SetActive(true);
+				for(int i = 0;i<playerExists.Length;i++){
+					if(playerExists[i]){
+						attackButtons[i+1].SetActive(true);
+					}
 				}
 			}
 			break;
@@ -226,8 +254,12 @@ public class SHManeger : MonoBehaviour {
 			moveStage (2);
 			break;
 		case 7:
-			buttonPanel.SetActive(true);
-			stageButtons.SetActive(true);
+			if(playerId != 0){
+				moveStage(Random.Range(0,5));
+			}else{
+				buttonPanel.SetActive(true);
+				stageButtons.SetActive(true);
+			}
 			break;
 		case 8:
 			moveStage (3);
@@ -329,8 +361,22 @@ public class SHManeger : MonoBehaviour {
 
 	/* 時空の扉 */
 	void drawFreeCard(){
-		buttonPanel.SetActive (true);
-		drawButtons.SetActive (true);
+		if (playerId != 0) {
+			switch(Random.Range (0,2)){
+			case 0:
+				drawBlackCard();
+				break;
+			case 1:
+				drawGreenCard();
+				break;
+			case 2:
+				drawWhiteCard();
+				break;
+			}
+		} else {
+			buttonPanel.SetActive (true);
+			drawButtons.SetActive (true);
+		}
 	}
 
 	/* 希望と絶望の森 */
