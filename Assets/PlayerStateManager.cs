@@ -3,7 +3,7 @@ using System.Collections;
 
 public class PlayerStateManager : MonoBehaviour {
 
-	int score;
+	public int score;
 	GameObject[] HP;
 	// Use this for initialization
 	void Start () {
@@ -24,8 +24,9 @@ public class PlayerStateManager : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update () {
-	
+	void Update () 
+    {
+	        
 	}
 
 	public int getScore(){
