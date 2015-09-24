@@ -29,6 +29,13 @@ public class SHManeger : MonoBehaviour {
 
 	int playerId,attackTarget;
 
+    //ここから追加
+    /*フェード中の透明度*/
+    private float fadeAlpha = 0;
+    /*フェード中かどうか*/
+    private bool isFading = false;
+    /*フェード色*/
+    public Color fadeColor = Color.black;
 
 	// Use this for initialization
 	void Start () {
@@ -181,6 +188,9 @@ public class SHManeger : MonoBehaviour {
 
 		switch (status) {
 		case 0:
+            /*ダイスロール時のカメラに切り替え*/
+            StartCoroutine(TransCamera(1.0f));
+            
 			if(playerId != 0){
 				d4Value = Random.Range(1,4);
 				d6Value = Random.Range(1,6);
@@ -195,6 +205,8 @@ public class SHManeger : MonoBehaviour {
 			StartCoroutine(getDiceValue());
 			break;
 		case 2:
+            /*通常のカメラに切り替え*/
+            StartCoroutine(TransCamera(1.0f));
 			/* コマ移動 */
 			getStageIndex(d6Value+d4Value);
 			break;
@@ -470,16 +482,61 @@ public class SHManeger : MonoBehaviour {
 		diceButton.SetActive(flag);
 	}
 
+    //ここから追加
+    /*フェードイン・アウトの線画*/
+    public void OnGUI()
+    {
+
+        // Fade .
+        if (this.isFading)
+        {
+            //色と透明度を更新して白テクスチャを描画 .
+            this.fadeColor.a = this.fadeAlpha;
+            GUI.color = this.fadeColor;
+            GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+        }
+    }
+
+    //フェードイン・アウト処理
+    private IEnumerator TransCamera(float interval)
+    {
+        //だんだん暗く .
+        this.isFading = true;
+        float time = 0;
+        while (time <= interval)
+        {
+            this.fadeAlpha = Mathf.Lerp(0f, 1f, time / interval);
+            time += Time.deltaTime;
+            yield return 0;
+        }
+
+        ChangeCamera();
+
+        //だんだん明るく .
+        time = 0;
+        while (time <= interval)
+        {
+            this.fadeAlpha = Mathf.Lerp(1f, 0f, time / interval);
+            time += Time.deltaTime;
+            yield return 0;
+        }
+
+        this.isFading = false;
+    }
+
     //カメラ切り替え
-    void ChangeCamera(){
+    void ChangeCamera()
+    {
         
-        if(mainCamera.enabled){
+        if(mainCamera.enabled)
+        {
 
             mainCamera.enabled = false;
 
             subCamera.enabled = true;
         }
-        else{
+        else
+        {
 
             mainCamera.enabled = true;
 
@@ -488,7 +545,8 @@ public class SHManeger : MonoBehaviour {
     }
 
 	// Update is called once per frame
-	void Update () {
+	void Update () 
+    {
 	    
         //デバッグ用zキーでカメラの切り替え
         if(Input.GetKeyDown("z"))
