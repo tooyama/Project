@@ -9,6 +9,8 @@ public class SHManeger : MonoBehaviour {
 
 	public GameObject d4,d6,diceButton,PlayerPanels,Monster,EffectPanels,Enemy,buttonPanel;
 
+    public Camera mainCamera,subCamera;
+
 	int d4Value,d6Value,greenCount,whiteCount,blackCount;
 
 	int[] stages = new int[6];
@@ -468,8 +470,30 @@ public class SHManeger : MonoBehaviour {
 		diceButton.SetActive(flag);
 	}
 
+    //カメラ切り替え
+    void ChangeCamera(){
+        
+        if(mainCamera.enabled){
+
+            mainCamera.enabled = false;
+
+            subCamera.enabled = true;
+        }
+        else{
+
+            mainCamera.enabled = true;
+
+            subCamera.enabled = false;
+        }
+    }
+
 	// Update is called once per frame
 	void Update () {
-	
+	    
+        //デバッグ用zキーでカメラの切り替え
+        if(Input.GetKeyDown("z"))
+        {
+            ChangeCamera();
+        }
 	}
 }

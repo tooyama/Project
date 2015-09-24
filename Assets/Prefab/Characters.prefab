@@ -1101,6 +1101,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHp: 11
+  name: 0
   type: 2
 --- !u!114 &11422084
 MonoBehaviour:
@@ -1114,6 +1115,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHp: 14
+  name: 3
   type: 0
 --- !u!114 &11428112
 MonoBehaviour:
@@ -1127,6 +1129,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHp: 14
+  name: 3
   type: 0
 --- !u!114 &11435842
 MonoBehaviour:
@@ -1140,6 +1143,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHp: 11
+  name: 0
   type: 2
 --- !u!114 &11450164
 MonoBehaviour:
@@ -1153,6 +1157,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHp: 12
+  name: 2
   type: 1
 --- !u!114 &11481084
 MonoBehaviour:
@@ -1166,6 +1171,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHp: 14
+  name: 1
   type: 1
 --- !u!1001 &100100000
 Prefab:
@@ -1173,7 +1179,11 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: name
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 167534}

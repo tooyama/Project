@@ -56,6 +56,7 @@
      <Compile Include="Assets\Script\CharacterState.cs" />
      <Compile Include="Assets\Script\DiceRoll.cs" />
      <Compile Include="Assets\Script\SHManeger.cs" />
+     <Compile Include="Assets\Script\SystemState.cs" />
      <Compile Include="Assets\Script\ViewCard.cs" />
      <Compile Include="Assets\buttonsController.cs" />
      <None Include="Assets\Dice\-Read-Me-.txt" />

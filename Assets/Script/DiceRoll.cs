@@ -27,9 +27,9 @@ public class DiceRoll : MonoBehaviour
 		foreach (Rigidbody rigid in rigidArray){
             rigid.WakeUp();
 			Vector3 tempMove = move;
-			tempMove.x += Random.Range (0, 20);
-			tempMove.y += Random.Range (50, 150);
-			tempMove.z += Random.Range (-10, 100);
+			tempMove.x += Random.Range (90, 120);
+			tempMove.y += Random.Range (80, 180);
+			tempMove.z += Random.Range (-50, 150);
 			rigid.AddForce(tempMove);
         }
 
