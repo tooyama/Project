@@ -7,6 +7,8 @@ public class SHManeger : MonoBehaviour {
 
 	public static int playerNum = 5;
 
+    public GameObject fazeEffect;
+
 	public GameObject d4,d6,diceButton,PlayerPanels,Monster,EffectPanels,Enemy,buttonPanel,character;
 
     public Camera mainCamera,subCamera;
@@ -31,9 +33,9 @@ public class SHManeger : MonoBehaviour {
 
 	int playerId,attackTarget;
 
-<<<<<<< HEAD
+//<<<<<<< HEAD
 	string selectWaiting;
-=======
+//=======
     //ここから追加
     /*フェード中の透明度*/
     private float fadeAlpha = 0;
@@ -41,7 +43,7 @@ public class SHManeger : MonoBehaviour {
     private bool isFading = false;
     /*フェード色*/
     public Color fadeColor = Color.black;
->>>>>>> origin/master
+//>>>>>>> origin/master
 
 	// Use this for initialization
 	void Start () {
@@ -671,6 +673,10 @@ public class SHManeger : MonoBehaviour {
         }
 
         this.isFading = false;
+
+        GameObject faze = Instantiate(fazeEffect) as GameObject;
+
+        Destroy(faze, 2.0f);
     }
 
     //カメラ切り替え
@@ -700,7 +706,12 @@ public class SHManeger : MonoBehaviour {
         //デバッグ用zキーでカメラの切り替え
         if(Input.GetKeyDown("z"))
         {
-            ChangeCamera();
+            //ChangeCamera();
+            /*
+            GameObject faze = Instantiate(fazeEffect) as GameObject;
+
+            Destroy(faze, 2.0f);
+             */
         }
 	}
 }
