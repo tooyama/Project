@@ -55,6 +55,7 @@
      <Compile Include="Assets\Script\CardSlide.cs" />
      <Compile Include="Assets\Script\CharacterState.cs" />
      <Compile Include="Assets\Script\DiceRoll.cs" />
+     <Compile Include="Assets\Script\FadeManager.cs" />
      <Compile Include="Assets\Script\SHManeger.cs" />
      <Compile Include="Assets\Script\SystemState.cs" />
      <Compile Include="Assets\Script\ViewCard.cs" />
