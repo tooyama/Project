@@ -7,7 +7,7 @@ public class SHManeger : MonoBehaviour {
 
 	public static int playerNum = 5;
 
-	public GameObject d4,d6,diceButton,PlayerPanels,Monster,EffectPanels,Enemy,buttonPanel;
+	public GameObject d4,d6,diceButton,PlayerPanels,Monster,EffectPanels,Enemy,buttonPanel,character;
 
     public Camera mainCamera,subCamera;
 
@@ -18,7 +18,9 @@ public class SHManeger : MonoBehaviour {
 	int[] whiteCards = new int[15];
 	int[] blackCards = new int[16];
 
-	GameObject[] greens,whites,blacks,effects,attackButtons,playerStates,monsters;
+	GameObject[] greens,whites,blacks,effects,attackButtons,selectButtons,playerStates,monsters;
+
+	CharacterState[] characters;
 
 	GameObject stageButtons,drawButtons;
 
@@ -29,6 +31,7 @@ public class SHManeger : MonoBehaviour {
 
 	int playerId,attackTarget;
 
+	string selectWaiting;
 
 	// Use this for initialization
 	void Start () {
@@ -63,12 +66,26 @@ public class SHManeger : MonoBehaviour {
 			card.SetActive(false);
 		}
 		blacks = GameObject.FindGameObjectsWithTag("blackCard");
+		/* 黒カードの並び替え */
+		for (int i = 0; i<blacks.Length-1; i++) {
+			for(int j = i+1;j<blacks.Length;j++){
+				int ai,aj;
+				ai = int.Parse(blacks[i].name.Substring(4));
+				aj = int.Parse(blacks[j].name.Substring(4));
+				if(ai>aj){
+					GameObject tmp = blacks[i];
+					blacks[i] = blacks[j];
+					blacks[j] = tmp;
+				}
+			}
+		}
 		foreach (GameObject card in blacks) {
 			card.SetActive(false);
 		}
 
 		/* ボタン類のセット */
 		attackButtons = GameObject.FindGameObjectsWithTag ("attackButton");
+		selectButtons = GameObject.FindGameObjectsWithTag ("selectButton");
 		drawButtons = GameObject.FindGameObjectWithTag ("drawButton");
 		stageButtons = GameObject.FindGameObjectWithTag ("stageButton");
 
@@ -88,10 +105,27 @@ public class SHManeger : MonoBehaviour {
 				}
 			}
 		}
+		/* selectButtonの並び替え */
+		for (int i = 0; i<selectButtons.Length-1; i++) {
+			for(int j = i+1;j<selectButtons.Length;j++){
+				int ai,aj;
+				ai = int.Parse(selectButtons[i].name.Substring(12));
+				aj = int.Parse(selectButtons[j].name.Substring(12));
+				if(ai>aj){
+					GameObject tmp = selectButtons[i];
+					selectButtons[i] = selectButtons[j];
+					selectButtons[j] = tmp;
+				}
+			}
+		}
 
 
 		/* ボタン類を非表示に */
 		foreach (GameObject obj in attackButtons) {
+			Debug.Log (obj.name);
+			obj.SetActive(false);
+		}
+		foreach (GameObject obj in selectButtons) {
 			obj.SetActive(false);
 		}
 		drawButtons.SetActive (false);
@@ -161,6 +195,19 @@ public class SHManeger : MonoBehaviour {
 				}
 			}
 		}
+
+		/* Character情報のセット */
+		characters = character.GetComponentsInChildren<CharacterState> ();
+
+		for (int i = 0; i<characters.Length; i++) {
+			int randomIndex = Random.Range (0,characters.Length);
+			CharacterState temp = characters[i];
+			characters[i] = characters[randomIndex];
+			characters[randomIndex] = temp;
+		}
+		for(int i = 0;i<playerNum;i++){
+			playerStates [attackTarget].GetComponent <PlayerStateManager>().setMaxHp(characters[i].maxHp);
+		}
 	}
 
 	/* 配列のシャッフル */
@@ -175,13 +222,13 @@ public class SHManeger : MonoBehaviour {
 			array[randomIndex] = temp;
 		}
 	}
-
 	public void ChangeGameStatus(int status){
 		gameStatus = status;
 
 		switch (status) {
 		case 0:
 			if(playerId != 0){
+//				StartCoroutine (waitSeconds (5));
 				d4Value = Random.Range(1,4);
 				d6Value = Random.Range(1,6);
 				ChangeGameStatus(2);
@@ -199,9 +246,11 @@ public class SHManeger : MonoBehaviour {
 			getStageIndex(d6Value+d4Value);
 			break;
 		case 3:
+			Debug.Log ("playerId = " + playerId);
 			/* 攻撃の処理 */
 			checkPlayerExist();
 			if(playerId != 0){
+//				StartCoroutine (waitSeconds (5));
 				int existCount = 0;
 				for(int i = 0;i < playerExists.Length;i++){
 					if(playerExists[i]) existCount++;
@@ -238,6 +287,9 @@ public class SHManeger : MonoBehaviour {
 			playerId = playerId%playerNum;
 			ChangeGameStatus(0);
 			break;
+		case 5:
+			Debug.Log ("game finished");
+			break;
 		}
 	}
 
@@ -271,6 +323,15 @@ public class SHManeger : MonoBehaviour {
 			break;
 		case 10:
 			moveStage (5);
+			break;
+		default:
+			if(playerId != 0){
+				moveStage(Random.Range(0,5));
+			}else{
+				buttonPanel.SetActive(true);
+				stageButtons.SetActive(true);
+			}
+			break;
 			break;
 		}
 
@@ -308,6 +369,7 @@ public class SHManeger : MonoBehaviour {
 	/* ****移動効果ここから**** */
 	/* ********************** */
 	/* ********************** */
+	bool selecting;
 
 	/* 老婆の庵 */
 	public void drawGreenCard(){
@@ -323,6 +385,7 @@ public class SHManeger : MonoBehaviour {
 		greenCount++;
 		if (greenCount == greenCards.Length) {
 			randomize (greenCards);
+			greenCount = 0;
 		}
 		Debug.Log ("finish dgc");
 		ChangeGameStatus(3);
@@ -338,8 +401,10 @@ public class SHManeger : MonoBehaviour {
 		}
 		whites [whiteCards [whiteCount]].SetActive (false);
 		whiteCount++;
-		if (whiteCount == whiteCards.Length)
+		if (whiteCount == whiteCards.Length) {
 			randomize (whiteCards);
+			whiteCount = 0;
+		}
 		Debug.Log ("finish dwc");
 		ChangeGameStatus(3);
 	}
@@ -350,16 +415,56 @@ public class SHManeger : MonoBehaviour {
 		drawButtons.SetActive (false);
 		
 		blacks [blackCards [blackCount]].SetActive (true);
-		/* 白カードの各効果 */
-		switch (blackCards [blackCount]) {
+//		StartCoroutine (waitSeconds (5));
+		/* 黒カードの各効果 */
+//		switch (blackCards [blackCount]) {
+		switch(blackCards[blackCount]){
+		case 0:
+			/* 妖刀マサムネ */ 
+			characters[playerId].addEquipment("Masamune");
+			drawBlackCardAfter();
+			break;
+		case 1:
+			/* 血に飢えた大蜘蛛 */
+			buttonPanel.SetActive (true);
+			activateSelectButtons(true);
+			Debug.Log(selectButtons[playerId].name);
+			selectButtons[playerId].SetActive(false);
+			selectWaiting = "bigspider";
+			selecting = true;
+			StartCoroutine(waitSelect());
+			break;
+		case 2:
+			/* ダイナマイト */
+			drawBlackCardAfter();
+			break;
+		case 3:
+			/* 拳銃 */
+			characters[playerId].addEquipment("HandGun");
+			drawBlackCardAfter();
+			break;
+		case 4:
+			/* 錆びついた大斧 */
+			characters[playerId].addEquipment("bigAxe");
+			drawBlackCardAfter();
+			break;
+		default:
+			drawBlackCardAfter();
+			break;
 		}
+	}
+
+	public void drawBlackCardAfter(){
 		blacks [blackCards [blackCount]].SetActive (false);
 		blackCount++;
-		if (blackCount == blackCards.Length)
+		if (blackCount == blackCards.Length) {
 			randomize (blackCards);
+			blackCount = 0;
+		}
 		Debug.Log ("finish dbc");
 		ChangeGameStatus(3);
 	}
+
 
 	/* 時空の扉 */
 	void drawFreeCard(){
@@ -407,7 +512,41 @@ public class SHManeger : MonoBehaviour {
 			obj.SetActive(flag);
 		}
 	}
-	
+	public void activateSelectButtons(bool flag){
+		foreach(GameObject obj in selectButtons){
+			obj.SetActive(flag);
+		}
+	}
+
+
+	public void selectCharacter(int id){
+		switch (selectWaiting) {
+		case "bigspider":
+			int tmpScore = playerStates [id].GetComponent <PlayerStateManager>().getScore ();
+			tmpScore += 2;
+			playerStates[id].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			tmpScore = playerStates [playerId].GetComponent <PlayerStateManager>().getScore ();
+			tmpScore += 2;
+			playerStates[playerId].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			break;
+		}
+		selecting = false;
+	}
+
+	IEnumerator waitSelect(){
+		while (selecting) {
+			yield return new WaitForSeconds(1.0f);
+		}
+		Debug.Log ("selecting finish");
+		switch (selectWaiting) {
+		case "bigspider":
+			drawBlackCardAfter ();
+			break;
+		}
+		Debug.Log ("after finish");
+	}
+
+
 	public void getAttackValue(){
 		StartCoroutine(getDiceValue());
 	}
@@ -447,6 +586,13 @@ public class SHManeger : MonoBehaviour {
 		} else if (gameStatus == 3) {
 			attackEnemy();
 		}
+	}
+	IEnumerator waitSeconds(int sec){
+		Debug.Log ("start waiting");
+//		Time.timeScale = 0.0f;
+		yield return new WaitForSeconds (sec);
+		Time.timeScale = 1.0f;
+		Debug.Log ("finish waiting");
 	}
 
 	IEnumerator waitingClick(){

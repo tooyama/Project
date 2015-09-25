@@ -4,6 +4,7 @@ using System.Collections;
 public class PlayerStateManager : MonoBehaviour {
 
 	public int score;
+	int maxHP = 0;
 	GameObject[] HP;
 	// Use this for initialization
 	void Start () {
@@ -34,10 +35,16 @@ public class PlayerStateManager : MonoBehaviour {
 	}
 
 	public void moveScore(int newScore){
-		Debug.Log ("move score start");
+		if (newScore >= maxHP) {
+			GameObject.FindGameObjectWithTag("stage").GetComponent<SHManeger>().ChangeGameStatus(5);
+			return;
+		}
 		score = newScore;
 		Vector3 v3 = gameObject.transform.position;
 		v3.z = HP [score].transform.position.z;
 		gameObject.transform.position = v3;
+	}
+	public void setMaxHp(int max){
+		maxHP = max;
 	}
 }
