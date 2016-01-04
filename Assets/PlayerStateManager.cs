@@ -35,6 +35,7 @@ public class PlayerStateManager : MonoBehaviour {
 	}
 
 	public void moveScore(int newScore){
+        Debug.Log("score:" + score + " newscore:" + newScore + " maxHP" + maxHP);
 		if (newScore >= maxHP) {
 			GameObject.FindGameObjectWithTag("stage").GetComponent<SHManeger>().ChangeGameStatus(5);
 			return;

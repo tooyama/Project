@@ -24,7 +24,7 @@ public class SHManeger : MonoBehaviour {
 
 	CharacterState[] characters;
 
-	GameObject stageButtons,drawButtons;
+	GameObject stageButtons,drawButtons,choiseButtons;
 
 	Transform[] panelPositions;
 
@@ -33,8 +33,13 @@ public class SHManeger : MonoBehaviour {
 
 	int playerId,attackTarget;
 
+    bool masamune,handgun;
+
+    bool mainPlayer = true;
+
+
 //<<<<<<< HEAD
-	string selectWaiting;
+	string selectingAction;
 //=======
     //ここから追加
     /*フェード中の透明度*/
@@ -78,7 +83,23 @@ public class SHManeger : MonoBehaviour {
 			card.SetActive(false);
 		}
 		blacks = GameObject.FindGameObjectsWithTag("blackCard");
-		/* 黒カードの並び替え */
+        /* 緑カードの並び替え */
+        for (int i = 0; i < greens.Length - 1; i++)
+        {
+            for (int j = i + 1; j < greens.Length; j++)
+            {
+                int ai, aj;
+                ai = int.Parse(greens[i].name.Substring(4));
+                aj = int.Parse(greens[j].name.Substring(4));
+                if (ai > aj)
+                {
+                    GameObject tmp = greens[i];
+                    greens[i] = greens[j];
+                    greens[j] = tmp;
+                }
+            }
+        }
+        /* 黒カードの並び替え */
 		for (int i = 0; i<blacks.Length-1; i++) {
 			for(int j = i+1;j<blacks.Length;j++){
 				int ai,aj;
@@ -99,7 +120,8 @@ public class SHManeger : MonoBehaviour {
 		attackButtons = GameObject.FindGameObjectsWithTag ("attackButton");
 		selectButtons = GameObject.FindGameObjectsWithTag ("selectButton");
 		drawButtons = GameObject.FindGameObjectWithTag ("drawButton");
-		stageButtons = GameObject.FindGameObjectWithTag ("stageButton");
+        stageButtons = GameObject.FindGameObjectWithTag("stageButton");
+        choiseButtons = GameObject.FindGameObjectWithTag("choiseButton");
 
 		/* プレイヤーセット */
 		monsters = GameObject.FindGameObjectsWithTag ("Monster");
@@ -134,7 +156,6 @@ public class SHManeger : MonoBehaviour {
 
 		/* ボタン類を非表示に */
 		foreach (GameObject obj in attackButtons) {
-			Debug.Log (obj.name);
 			obj.SetActive(false);
 		}
 		foreach (GameObject obj in selectButtons) {
@@ -142,6 +163,7 @@ public class SHManeger : MonoBehaviour {
 		}
 		drawButtons.SetActive (false);
 		stageButtons.SetActive (false);
+        choiseButtons.SetActive(false);
 
 		/* イベントパネルの位置情報のセット */
 		Transform[] tmps = PlayerPanels.GetComponentsInChildren<Transform>();
@@ -218,7 +240,8 @@ public class SHManeger : MonoBehaviour {
 			characters[randomIndex] = temp;
 		}
 		for(int i = 0;i<playerNum;i++){
-			playerStates [attackTarget].GetComponent <PlayerStateManager>().setMaxHp(characters[i].maxHp);
+            Debug.Log(i + " HP:" + characters[i].maxHp);
+			playerStates [i].GetComponent <PlayerStateManager>().setMaxHp(characters[i].maxHp);
 		}
 	}
 
@@ -236,14 +259,13 @@ public class SHManeger : MonoBehaviour {
 	}
 	public void ChangeGameStatus(int status){
 		gameStatus = status;
-
 		switch (status) {
 		case 0:
             /*ダイスロール時のカメラに切り替え*/
             StartCoroutine(TransCamera(1.0f));
-            
-			if(playerId != 0){
-//				StartCoroutine (waitSeconds (5));
+
+            if (!mainPlayer)
+            {
 				d4Value = Random.Range(1,4);
 				d6Value = Random.Range(1,6);
 				ChangeGameStatus(2);
@@ -264,10 +286,20 @@ public class SHManeger : MonoBehaviour {
 			break;
 		case 3:
 			Debug.Log ("playerId = " + playerId);
+            masamune = false;
+            handgun = false;
+            /* マサムネの所持確認 */
+            if(characters[playerId].findEquipment("Masamune")){
+                masamune = true;
+            }
+            /* 拳銃の所持確認 */
+            if(characters[playerId].findEquipment("HandGun")){
+                handgun = true;
+            }
 			/* 攻撃の処理 */
 			checkPlayerExist();
-			if(playerId != 0){
-//				StartCoroutine (waitSeconds (5));
+            if (!mainPlayer)
+            {
 				int existCount = 0;
 				for(int i = 0;i < playerExists.Length;i++){
 					if(playerExists[i]) existCount++;
@@ -289,17 +321,23 @@ public class SHManeger : MonoBehaviour {
 				}
 			}else{
 				buttonPanel.SetActive(true);
-				attackButtons[0].SetActive(true);
-
+                bool attackPossibility = false;
 				for(int i = 0;i<playerExists.Length;i++){
 					if(playerExists[i]){
 						attackButtons[i+1].SetActive(true);
+                        attackPossibility = true;
 					}
 				}
-			}
+                if (!masamune || !attackPossibility)
+                {
+                    attackButtons[0].SetActive(true);
+                }
+            }
 			break;
 		case 4:
 			Debug.Log ("finished");
+            masamune = false;
+            handgun = false;
 			playerId++;
 			playerId = playerId%playerNum;
 			ChangeGameStatus(0);
@@ -312,6 +350,7 @@ public class SHManeger : MonoBehaviour {
 
 	/* 出目から移動先を決定 */
 	public void getStageIndex(int moveStatus){
+        Debug.Log("moveStatus:" + moveStatus);
 		switch (moveStatus){
 		case 2:
 		case 3:
@@ -325,7 +364,7 @@ public class SHManeger : MonoBehaviour {
 			moveStage (2);
 			break;
 		case 7:
-			if(playerId != 0){
+			if(!mainPlayer){
 				moveStage(Random.Range(0,5));
 			}else{
 				buttonPanel.SetActive(true);
@@ -342,13 +381,12 @@ public class SHManeger : MonoBehaviour {
 			moveStage (5);
 			break;
 		default:
-			if(playerId != 0){
+			if(!mainPlayer){
 				moveStage(Random.Range(0,5));
 			}else{
 				buttonPanel.SetActive(true);
 				stageButtons.SetActive(true);
 			}
-			break;
 			break;
 		}
 
@@ -356,7 +394,8 @@ public class SHManeger : MonoBehaviour {
 
 	/* ステージ移動 */
 	public void moveStage(int stageIndex){
-		stageButtons.SetActive (false);;
+        Debug.Log("stageIndex:" + stageIndex);
+        stageButtons.SetActive(false);
 		monsters[playerId].transform.position = panelPositions[stages[stageIndex]].position;
 		playersPositions [playerId] = stages [stageIndex];
 		switch (stageIndex) {
@@ -395,18 +434,190 @@ public class SHManeger : MonoBehaviour {
 
 		greens [greenCards [greenCount]].SetActive (true);
 		/* オババカードを送る相手を選択*/
-		/* オババカードの各効果 */
-		switch (greenCards [greenCount]) {
-		}
-		greens [greenCards [greenCount]].SetActive (false);
-		greenCount++;
-		if (greenCount == greenCards.Length) {
-			randomize (greenCards);
-			greenCount = 0;
-		}
-		Debug.Log ("finish dgc");
-		ChangeGameStatus(3);
+		buttonPanel.SetActive(true);
+		activateSelectButtons(true);
+		selectButtons[playerId].SetActive(false);
+		selectingAction = "obaba";
+		selecting = true;
 	}
+
+    int tmppid;
+
+	public void greenCardAction(int pid){
+        tmppid = pid;
+		/* オババカードの各効果 */
+        Debug.Log("case:" + (greenCards[greenCount] + 1));
+		switch (greenCards [greenCount]+1) {
+            case 1:
+                if (characters[pid].isHunter())
+                {
+                    choiseButtons.SetActive(true);
+                }
+                else
+                {
+                    greenCardAfter();
+                }
+                break;
+            case 2: case 3:
+    			if(characters[pid].isHunter()){
+	    			int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+		    		tmpScore++;
+			    	playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			    }
+                greenCardAfter();
+    			break;
+    		case 4:
+			if(characters[pid].isOver(12)){
+				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				tmpScore += 2;
+				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			}
+            greenCardAfter();
+			break;
+            case 5:
+            if (characters[pid].isHunter() || characters[pid].isShadow())
+            {
+                choiseButtons.SetActive(true);
+            }
+            else
+            {
+                greenCardAfter();
+            }
+            break;
+            case 6:
+            if (characters[pid].isShadow())
+            {
+				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				tmpScore++;
+				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			}
+            greenCardAfter();
+			break;
+            case 7:
+            if (characters[pid].isHunter() || characters[pid].isShadow())
+            {
+                choiseButtons.SetActive(true);
+            }
+            else
+            {
+                greenCardAfter();
+            }
+
+            break;
+            case 8:
+            if (characters[pid].isNeutral() || characters[pid].isShadow())
+            {
+                choiseButtons.SetActive(true);
+            }
+            else
+            {
+                greenCardAfter();
+            }
+
+            break;
+            case 9:
+            if (characters[pid].isHunter())
+            {
+				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				if(tmpScore > 0) tmpScore--;
+				else tmpScore++;
+				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			}
+            greenCardAfter();
+			break;
+	    	case 10:
+            if (characters[pid].isNeutral())
+            {
+				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				if(tmpScore > 0) tmpScore--;
+				else tmpScore++;
+				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			}
+            greenCardAfter();
+			break;
+    		case 11:
+			if(characters[pid].isUnder(11)){
+				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				tmpScore++;
+				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			}
+            greenCardAfter();
+			break;
+            case 12:
+            if (characters[pid].isNeutral() || characters[pid].isShadow())
+            {
+                choiseButtons.SetActive(true);
+            }
+            else
+            {
+                greenCardAfter();
+            }
+
+            break;
+            case 13:
+            if (characters[pid].isShadow())
+            {
+				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				tmpScore += 2;
+				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			}
+            greenCardAfter();
+			break;
+            case 14:
+            if (characters[pid].isNeutral() || characters[pid].isHunter())
+            {
+                choiseButtons.SetActive(true);
+            }
+            else
+            {
+                greenCardAfter();
+            }
+
+            break;
+            case 16:
+            if (characters[pid].isShadow())
+            {
+				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				if(tmpScore > 0) tmpScore--;
+				else tmpScore++;
+				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			}
+            greenCardAfter();
+			break;
+            default:
+            greenCardAfter();
+            break;
+		}
+	}
+
+    public void greenCardAfter()
+    {
+        greens[greenCards[greenCount]].SetActive(false);
+        greenCount++;
+        if (greenCount == greenCards.Length)
+        {
+            randomize(greenCards);
+            greenCount = 0;
+        }
+        Debug.Log("finish dgc");
+        ChangeGameStatus(3);
+    }
+
+    public void handOffEquip()
+    {
+        choiseButtons.SetActive(false);
+        ChangeGameStatus(3);
+    }
+
+    public void getDamage()
+    {
+        choiseButtons.SetActive(false);
+        int tmpScore = playerStates[tmppid].GetComponent<PlayerStateManager>().getScore();
+        tmpScore++;
+        playerStates[tmppid].GetComponent<PlayerStateManager>().moveScore(tmpScore);
+        ChangeGameStatus(3);
+    }
+	
 	/* 教会 */
 	public void drawWhiteCard(){
 		/* 時空の扉からのドロー時の処理 */
@@ -432,37 +643,73 @@ public class SHManeger : MonoBehaviour {
 		drawButtons.SetActive (false);
 		
 		blacks [blackCards [blackCount]].SetActive (true);
-//		StartCoroutine (waitSeconds (5));
+
+        int black_for_debug = 1;
+
 		/* 黒カードの各効果 */
-//		switch (blackCards [blackCount]) {
-		switch(blackCards[blackCount]){
-		case 0:
+		switch(blackCards[blackCount]+1){
+		case 1:
 			/* 妖刀マサムネ */ 
 			characters[playerId].addEquipment("Masamune");
 			drawBlackCardAfter();
 			break;
-		case 1:
-			/* 血に飢えた大蜘蛛 */
-			buttonPanel.SetActive (true);
-			activateSelectButtons(true);
-			Debug.Log(selectButtons[playerId].name);
-			selectButtons[playerId].SetActive(false);
-			selectWaiting = "bigspider";
-			selecting = true;
-			StartCoroutine(waitSelect());
-			break;
 		case 2:
+			/* 血に飢えた大蜘蛛 */
+            if (mainPlayer)
+            {
+                buttonPanel.SetActive(true);
+                activateSelectButtons(true);
+                selectButtons[playerId].SetActive(false);
+                selectingAction = "bigspider";
+                selecting = true;
+            }
+            else
+            {
+                drawBlackCardAfter();
+            }
+			break;
+		case 3:
 			/* ダイナマイト */
 			drawBlackCardAfter();
 			break;
-		case 3:
+		case 4:
 			/* 拳銃 */
 			characters[playerId].addEquipment("HandGun");
 			drawBlackCardAfter();
 			break;
-		case 4:
+		case 5:
 			/* 錆びついた大斧 */
 			characters[playerId].addEquipment("bigAxe");
+			drawBlackCardAfter();
+			break;
+		case 9:
+			/* 肉切り包丁 */
+			characters[playerId].addEquipment("knife");
+			drawBlackCardAfter();
+            break;
+		case 10: case 12: case 14:
+			/* 吸血コウモリ */
+            if (mainPlayer)
+            {
+                buttonPanel.SetActive(true);
+                activateSelectButtons(true);
+                selectButtons[playerId].SetActive(false);
+                selectingAction = "bat";
+                selecting = true;
+            }
+            else
+            {
+                drawBlackCardAfter();
+            }
+			break;
+		case 13:
+			/* チェーンソー */
+			characters[playerId].addEquipment("ChainSaw");
+			drawBlackCardAfter();
+			break;
+		case 15:
+			/* 機関銃 */
+			characters[playerId].addEquipment("MachineGun");
 			drawBlackCardAfter();
 			break;
 		default:
@@ -485,7 +732,7 @@ public class SHManeger : MonoBehaviour {
 
 	/* 時空の扉 */
 	void drawFreeCard(){
-		if (playerId != 0) {
+		if (!mainPlayer) {
 			switch(Random.Range (0,2)){
 			case 0:
 				drawBlackCard();
@@ -537,14 +784,31 @@ public class SHManeger : MonoBehaviour {
 
 
 	public void selectCharacter(int id){
-		switch (selectWaiting) {
+		switch (selectingAction) {
 		case "bigspider":
+			buttonPanel.SetActive (false);
 			int tmpScore = playerStates [id].GetComponent <PlayerStateManager>().getScore ();
 			tmpScore += 2;
 			playerStates[id].GetComponent<PlayerStateManager>().moveScore (tmpScore);
 			tmpScore = playerStates [playerId].GetComponent <PlayerStateManager>().getScore ();
 			tmpScore += 2;
 			playerStates[playerId].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			drawBlackCardAfter ();
+			break;
+		case "bat":
+			buttonPanel.SetActive (false);
+			tmpScore = playerStates [id].GetComponent <PlayerStateManager>().getScore ();
+			tmpScore += 2;
+			playerStates[id].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			tmpScore = playerStates [playerId].GetComponent <PlayerStateManager>().getScore ();
+			tmpScore--;
+            if (tmpScore < 0) tmpScore = 0;
+			playerStates[playerId].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			drawBlackCardAfter ();
+			break;
+		case "obaba":
+			buttonPanel.SetActive (false);
+			greenCardAction (id);
 			break;
 		}
 		selecting = false;
@@ -555,7 +819,7 @@ public class SHManeger : MonoBehaviour {
 			yield return new WaitForSeconds(1.0f);
 		}
 		Debug.Log ("selecting finish");
-		switch (selectWaiting) {
+		switch (selectingAction) {
 		case "bigspider":
 			drawBlackCardAfter ();
 			break;
@@ -580,8 +844,14 @@ public class SHManeger : MonoBehaviour {
 			playerExists[i] = false;
 		}
 		for(int i = 0;i<playersPositions.Length;i++){
-			if(i != playerId && playersPositions[i]/2 == playersPositions[playerId]/2){
-				playerExists[i] = true;
+			if(!handgun){
+				if(i != playerId && playersPositions[i]/2 == playersPositions[playerId]/2){
+					playerExists[i] = true;
+				}
+			}else{
+				if(i != playerId && playersPositions[i]/2 != playersPositions[playerId]/2){
+					playerExists[i] = true;
+				}
 			}
 		}
 	}
@@ -595,16 +865,19 @@ public class SHManeger : MonoBehaviour {
 		}
 		d6Value = d6.GetComponent<Die_d6>().value;
 		d4Value = d4.GetComponent<Die_d6>().value;
-		Debug.Log ("d6:" + d6Value + " d4:" + d4Value);
 		d4Value = d4Value % 4 + 1;
+        if (masamune) d6Value = 0;
 		dicesActivate (false);
+        Debug.Log("d6:" + d6Value + " d4:" + d4Value);
+
 		if (gameStatus == 1) {
 			ChangeGameStatus (2);
 		} else if (gameStatus == 3) {
 			attackEnemy();
 		}
 	}
-	IEnumerator waitSeconds(int sec){
+
+    IEnumerator waitSeconds(int sec){
 		Debug.Log ("start waiting");
 //		Time.timeScale = 0.0f;
 		yield return new WaitForSeconds (sec);
@@ -625,9 +898,12 @@ public class SHManeger : MonoBehaviour {
 		d4.transform.rotation = Quaternion.Euler (Random.Range (0, 360), Random.Range (0, 360), Random.Range (0, 360));
 		d6.transform.rotation = Quaternion.Euler (Random.Range (0, 360), Random.Range (0, 360), Random.Range (0, 360));
 		d4.SetActive(flag);
-		d6.SetActive(flag);
 		d4.GetComponent<Rigidbody>().Sleep();
-		d6.GetComponent<Rigidbody>().Sleep();
+        if (!masamune)
+        {
+            d6.SetActive(flag);
+            d6.GetComponent<Rigidbody>().Sleep();
+        }
 
 		buttonPanel.SetActive (flag);
 		diceButton.SetActive(flag);

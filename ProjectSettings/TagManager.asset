@@ -17,6 +17,7 @@ TagManager:
   - SubCamera
   - selectButton
   - stage
+  - choiseButton
   layers:
   - Default
   - TransparentFX
