@@ -235,7 +235,7 @@ GameObject:
   - 114: {fileID: 9844513}
   - 114: {fileID: 9844512}
   m_Layer: 5
-  m_Name: Card1 (4)
+  m_Name: Card5
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1411,7 +1411,7 @@ GameObject:
   - 114: {fileID: 83258011}
   - 114: {fileID: 83258010}
   m_Layer: 5
-  m_Name: Card1 (10)
+  m_Name: Card11
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3757,7 +3757,7 @@ GameObject:
   - 114: {fileID: 470317678}
   - 114: {fileID: 470317677}
   m_Layer: 5
-  m_Name: Card1 (3)
+  m_Name: Card4
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3997,7 +3997,7 @@ GameObject:
   - 114: {fileID: 493040136}
   - 114: {fileID: 493040135}
   m_Layer: 5
-  m_Name: Card1 (5)
+  m_Name: Card6
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4554,7 +4554,7 @@ GameObject:
   - 114: {fileID: 637516594}
   - 114: {fileID: 637516593}
   m_Layer: 5
-  m_Name: Card1 (14)
+  m_Name: Card15
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5843,7 +5843,7 @@ GameObject:
   - 114: {fileID: 814944627}
   - 114: {fileID: 814944626}
   m_Layer: 5
-  m_Name: Card1 (7)
+  m_Name: Card8
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6062,7 +6062,7 @@ GameObject:
   - 114: {fileID: 829066194}
   - 114: {fileID: 829066193}
   m_Layer: 5
-  m_Name: Card1 (9)
+  m_Name: Card10
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8237,7 +8237,7 @@ GameObject:
   - 114: {fileID: 1061152857}
   - 114: {fileID: 1061152856}
   m_Layer: 5
-  m_Name: Card1 (6)
+  m_Name: Card7
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8716,7 +8716,7 @@ GameObject:
   - 114: {fileID: 1122485011}
   - 114: {fileID: 1122485010}
   m_Layer: 5
-  m_Name: Card1 (11)
+  m_Name: Card12
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10311,7 +10311,7 @@ GameObject:
   - 114: {fileID: 1265655740}
   - 114: {fileID: 1265655739}
   m_Layer: 5
-  m_Name: Card1 (2)
+  m_Name: Card3
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10709,7 +10709,7 @@ GameObject:
   - 114: {fileID: 1307124148}
   - 114: {fileID: 1307124147}
   m_Layer: 5
-  m_Name: Card1 (1)
+  m_Name: Card2
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11334,7 +11334,7 @@ GameObject:
   - 114: {fileID: 1423794638}
   - 114: {fileID: 1423794637}
   m_Layer: 5
-  m_Name: Card1 (8)
+  m_Name: Card9
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -12412,7 +12412,7 @@ GameObject:
   - 114: {fileID: 1629987203}
   - 114: {fileID: 1629987202}
   m_Layer: 5
-  m_Name: Card1 (12)
+  m_Name: Card13
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -13142,7 +13142,7 @@ GameObject:
   - 114: {fileID: 1698857612}
   - 114: {fileID: 1698857611}
   m_Layer: 5
-  m_Name: Card1 (13)
+  m_Name: Card14
   m_TagString: whiteCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

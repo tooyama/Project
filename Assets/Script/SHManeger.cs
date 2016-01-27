@@ -31,9 +31,9 @@ public class SHManeger : MonoBehaviour {
 	int[] playersPositions = new int[playerNum];
 	bool[] playerExists = new bool[playerNum];
 
-	int playerId,attackTarget;
+	int playerId,attackTarget,angelId = -1;
 
-    bool masamune,handgun;
+    bool masamune,handgun,wisdom;
 
     bool mainPlayer = true;
 
@@ -83,6 +83,10 @@ public class SHManeger : MonoBehaviour {
 			card.SetActive(false);
 		}
 		blacks = GameObject.FindGameObjectsWithTag("blackCard");
+        foreach (GameObject card in blacks)
+        {
+            card.SetActive(false);
+        }
         /* 緑カードの並び替え */
         for (int i = 0; i < greens.Length - 1; i++)
         {
@@ -112,9 +116,22 @@ public class SHManeger : MonoBehaviour {
 				}
 			}
 		}
-		foreach (GameObject card in blacks) {
-			card.SetActive(false);
-		}
+        /* 白カードの並び替え */
+        for (int i = 0; i < whites.Length - 1; i++)
+        {
+            for (int j = i + 1; j < whites.Length; j++)
+            {
+                int ai, aj;
+                ai = int.Parse(whites[i].name.Substring(4));
+                aj = int.Parse(whites[j].name.Substring(4));
+                if (ai > aj)
+                {
+                    GameObject tmp = whites[i];
+                    whites[i] = whites[j];
+                    whites[j] = tmp;
+                }
+            }
+        }
 
 		/* ボタン類のセット */
 		attackButtons = GameObject.FindGameObjectsWithTag ("attackButton");
@@ -261,6 +278,8 @@ public class SHManeger : MonoBehaviour {
 		gameStatus = status;
 		switch (status) {
 		case 0:
+            /* 守護天使の効果切れ */
+                angelId = -1;
             /*ダイスロール時のカメラに切り替え*/
             StartCoroutine(TransCamera(1.0f));
 
@@ -338,8 +357,12 @@ public class SHManeger : MonoBehaviour {
 			Debug.Log ("finished");
             masamune = false;
             handgun = false;
-			playerId++;
-			playerId = playerId%playerNum;
+            if (!wisdom)
+            {
+                playerId++;
+                playerId = playerId % playerNum;
+            }
+            wisdom = false;
 			ChangeGameStatus(0);
 			break;
 		case 5:
@@ -625,8 +648,76 @@ public class SHManeger : MonoBehaviour {
 		
 		whites [whiteCards [whiteCount]].SetActive (true);
 		/* 白カードの各効果 */
-		switch (whiteCards [whiteCount]) {
-		}
+		switch (whiteCards [whiteCount]+1) {
+            case 1:
+            /* 神秘のコンパス */
+                characters[playerId].addEquipment("Compass");
+                break;
+            case 2:
+            /* 封印の知恵(もう一度手番を行う) */
+                wisdom = true;
+                break;
+            case 3:
+                /* 癒やしの聖水 */
+				int tmpScore = playerStates [playerId].GetComponent <PlayerStateManager>().getScore ();
+                if (tmpScore > 2) tmpScore -= 2;
+                else tmpScore = 0;
+				playerStates[playerId].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+                break;
+            case 4:
+                /* 魔除けのお守り */
+                characters[playerId].addEquipment("Amulet");
+                break;
+            case 5:
+                /* 恩恵 */
+                break;
+            case 6:
+                /* 聖者のローブ */
+                characters[playerId].addEquipment("Robe");
+                break;
+            case 7:
+                /* チョコレート */
+                //該当キャラクターなし
+                break;
+            case 8:
+                /* 銀のロザリオ */
+                characters[playerId].addEquipment("Rosary");
+                break;
+            case 9:
+                /* ロンギヌスの槍 */
+                characters[playerId].addEquipment("Longinus");
+                break;
+            case 10:
+                /* 守護天使 */
+                angelId = playerId; //攻撃対象のIdがangelIdならノーダメ
+                break;
+            case 11:
+                /* 裁きの閃光 */
+                for (int i = 0; i < playerStates.Length; i++)
+                {
+                    if (i != playerId)
+                    {
+                        tmpScore = playerStates[i].GetComponent<PlayerStateManager>().getScore();
+                        tmpScore += 2;
+                        playerStates[i].GetComponent<PlayerStateManager>().moveScore(tmpScore);
+                    }
+                }
+                break;
+            case 12:
+                /* 応急手当 */
+                break;
+            case 13:
+                characters[playerId].addEquipment("Brooch");
+                break;
+            case 14:
+                /* 闇を祓う鏡 */
+                //正体公開実装後実装
+                break;
+            case 15:
+                /* 光臨 */
+                //正体公開実装後
+                break;
+        }
 		whites [whiteCards [whiteCount]].SetActive (false);
 		whiteCount++;
 		if (whiteCount == whiteCards.Length) {
@@ -644,7 +735,7 @@ public class SHManeger : MonoBehaviour {
 		
 		blacks [blackCards [blackCount]].SetActive (true);
 
-        int black_for_debug = 1;
+//        int black_for_debug = 1;
 
 		/* 黒カードの各効果 */
 		switch(blackCards[blackCount]+1){
@@ -833,9 +924,12 @@ public class SHManeger : MonoBehaviour {
 	}
 	
 	public void attackEnemy(){
-		int tmpScore = playerStates [attackTarget].GetComponent <PlayerStateManager>().getScore ();
-		tmpScore += Mathf.Abs (d6Value - d4Value);
-		playerStates [attackTarget].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+        if (attackTarget != angelId)
+        {
+            int tmpScore = playerStates[attackTarget].GetComponent<PlayerStateManager>().getScore();
+            tmpScore += Mathf.Abs(d6Value - d4Value);
+            playerStates[attackTarget].GetComponent<PlayerStateManager>().moveScore(tmpScore);
+        }
 		ChangeGameStatus (4);
 	}
 
