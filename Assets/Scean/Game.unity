@@ -1180,6 +1180,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   score: 0
+  dead: 0
 --- !u!1 &76298466
 GameObject:
   m_ObjectHideFlags: 0
@@ -3397,6 +3398,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   score: 0
+  dead: 0
 --- !u!1 &328119099
 GameObject:
   m_ObjectHideFlags: 0
@@ -4461,6 +4463,10 @@ Prefab:
     - target: {fileID: 11481084, guid: 7ac0a189d4403af45a28bbd81c4dfef7, type: 2}
       propertyPath: fullname
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 165632, guid: 7ac0a189d4403af45a28bbd81c4dfef7, type: 2}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 7ac0a189d4403af45a28bbd81c4dfef7, type: 2}
@@ -7216,6 +7222,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   score: 0
+  dead: 0
 --- !u!23 &942458446
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11001,6 +11008,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   score: 0
+  dead: 0
 --- !u!1 &1394039371
 GameObject:
   m_ObjectHideFlags: 0
@@ -13153,6 +13161,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   score: 0
+  dead: 0
 --- !u!1 &1698857609
 GameObject:
   m_ObjectHideFlags: 0

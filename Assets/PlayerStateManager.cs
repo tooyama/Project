@@ -49,4 +49,22 @@ public class PlayerStateManager : MonoBehaviour {
 	public void setMaxHp(int max){
 		maxHP = max;
 	}
+
+    public bool getDamage(int damage)
+    {
+        score += damage;
+        if (score < 0) score = 0;
+        if (score > maxHP) dead = true;
+        if (!dead)
+        {
+            Vector3 v3 = gameObject.transform.position;
+            v3.z = HP[score].transform.position.z;
+            gameObject.transform.position = v3;
+        }
+        else
+        {
+            gameObject.SetActive(false);
+        }
+        return dead;
+    }
 }
