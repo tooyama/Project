@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class SHManeger : MonoBehaviour {
 
@@ -9,9 +10,11 @@ public class SHManeger : MonoBehaviour {
 
     public GameObject fazeEffect;
 
-	public GameObject d4,d6,diceButton,PlayerPanels,Monster,EffectPanels,Enemy,buttonPanel,character;
+	public GameObject d4,d6,diceButton,PlayerPanels,Monster,EffectPanels,Enemy,buttonPanel,character,buttonPrefab;
 
     public Camera mainCamera,subCamera;
+
+    public DiceRoll diceroll;
 
 	int d4Value,d6Value,greenCount,whiteCount,blackCount;
 
@@ -24,14 +27,14 @@ public class SHManeger : MonoBehaviour {
 
 	CharacterState[] characters;
 
-	GameObject stageButtons,drawButtons,choiseButtons;
+    GameObject stageButtons, drawButtons, choiseButtons, firstButton, secondButton, openButton1, openButton2;
 
 	Transform[] panelPositions;
 
 	int[] playersPositions = new int[playerNum];
 	bool[] playerExists = new bool[playerNum];
 
-	int playerId,attackTarget,angelId = -1;
+	int playerId,attackTarget,angelId = -1,compass_first = -1,compass_second,wightCounter = 0;
 
     bool masamune,handgun,wisdom;
 
@@ -39,7 +42,7 @@ public class SHManeger : MonoBehaviour {
 
 
 //<<<<<<< HEAD
-	string selectingAction;
+	string selectingAction = "",diceAction = "";
 //=======
     //ここから追加
     /*フェード中の透明度*/
@@ -60,10 +63,15 @@ public class SHManeger : MonoBehaviour {
 			playersPositions[i] = -2;
 		}
 
-		ChangeGameStatus (0);
+		ChangeGameStatus (-1);
 	}
 
-	void setStage(){
+    /*                                */
+    /* 開始時のステージ初期化ここから */
+    /*                                */
+
+    void setStage()
+    {
 		/* カードのシャッフル */
 		randomize (stages);
 		randomize (greenCards);
@@ -181,6 +189,30 @@ public class SHManeger : MonoBehaviour {
 		drawButtons.SetActive (false);
 		stageButtons.SetActive (false);
         choiseButtons.SetActive(false);
+        /* 神秘のコンパス用のボタン(prefabから生成) */
+        firstButton = Instantiate(buttonPrefab, new Vector3(580,160,0), Quaternion.identity) as GameObject;
+        secondButton = Instantiate(buttonPrefab, new Vector3(580, 60, 0), Quaternion.identity) as GameObject;
+        firstButton.transform.SetParent(buttonPanel.GetComponent<Transform>());
+        secondButton.transform.SetParent(buttonPanel.GetComponent<Transform>());
+        firstButton.GetComponent<Button>().onClick.AddListener(() => selectCompass(1));
+        secondButton.GetComponent<Button>().onClick.AddListener(() => selectCompass(2));
+        firstButton.SetActive(false);
+        secondButton.SetActive(false);
+
+        /* 正体公開用ボタン */
+        openButton1 = Instantiate(buttonPrefab, new Vector3(580, 160, 0), Quaternion.identity) as GameObject;
+        openButton2 = Instantiate(buttonPrefab, new Vector3(580, 60, 0), Quaternion.identity) as GameObject;
+        openButton1.transform.SetParent(buttonPanel.GetComponent<Transform>());
+        openButton2.transform.SetParent(buttonPanel.GetComponent<Transform>());
+        openButton1.GetComponent<Button>().onClick.AddListener(() => activateOpenButtons(false));
+        openButton2.GetComponent<Button>().onClick.AddListener(() => activateOpenButtons(false));
+        openButton1.GetComponent<Button>().onClick.AddListener(() => revealIdentity());
+        openButton2.GetComponent<Button>().onClick.AddListener(() => ChangeGameStatus(0));
+        openButton1.transform.FindChild("Text").GetComponent<Text>().text = "正体を公開する";
+        openButton2.transform.FindChild("Text").GetComponent<Text>().text = "正体を公開しない";
+        openButton1.SetActive(false);
+        openButton2.SetActive(false);
+
 
 		/* イベントパネルの位置情報のセット */
 		Transform[] tmps = PlayerPanels.GetComponentsInChildren<Transform>();
@@ -257,12 +289,15 @@ public class SHManeger : MonoBehaviour {
 			characters[randomIndex] = temp;
 		}
 		for(int i = 0;i<playerNum;i++){
-            Debug.Log(i + " HP:" + characters[i].maxHp);
+            Debug.Log(i + " HP:" + characters[i].maxHp + "(" + characters[i].fullname + ")");
 			playerStates [i].GetComponent <PlayerStateManager>().setMaxHp(characters[i].maxHp);
 		}
+        dicesActivate(false);
 	}
 
-	/* 配列のシャッフル */
+
+
+	/* 配列のシャッフル(補助関数) */
 	void randomize(int[] array){
 		for (int i = 0; i<array.Length; i++) {
 			array[i] = i;
@@ -274,100 +309,137 @@ public class SHManeger : MonoBehaviour {
 			array[randomIndex] = temp;
 		}
 	}
-	public void ChangeGameStatus(int status){
+
+    /*                                */
+    /* 開始時のステージ初期化ここまで */
+    /*                                */
+
+    /*                                */
+    /*　 ゲームステート管理ここから　 */
+    /*                                */
+
+    bool compass;
+    
+    public void ChangeGameStatus(int status){
+        Debug.Log("ChangeGameStatus:" + status + " playerId:" + playerId);
 		gameStatus = status;
 		switch (status) {
-		case 0:
-            /* 守護天使の効果切れ */
-                angelId = -1;
-            /*ダイスロール時のカメラに切り替え*/
-            StartCoroutine(TransCamera(1.0f));
-
-            if (!mainPlayer)
-            {
-				d4Value = Random.Range(1,4);
-				d6Value = Random.Range(1,6);
-				ChangeGameStatus(2);
-			}else{
-				/* ダイスのアクティブ化 */
-				dicesActivate (true);
-			}
-			break;
-		case 1:
-			/* ダイスの値取得 */
-			StartCoroutine(getDiceValue());
-			break;
-		case 2:
-            /*通常のカメラに切り替え*/
-            StartCoroutine(TransCamera(1.0f));
-			/* コマ移動 */
-			getStageIndex(d6Value+d4Value);
-			break;
-		case 3:
-			Debug.Log ("playerId = " + playerId);
-            masamune = false;
-            handgun = false;
-            /* マサムネの所持確認 */
-            if(characters[playerId].findEquipment("Masamune")){
-                masamune = true;
-            }
-            /* 拳銃の所持確認 */
-            if(characters[playerId].findEquipment("HandGun")){
-                handgun = true;
-            }
-			/* 攻撃の処理 */
-			checkPlayerExist();
-            if (!mainPlayer)
-            {
-				int existCount = 0;
-				for(int i = 0;i < playerExists.Length;i++){
-					if(playerExists[i]) existCount++;
-				}
-				int attackSelect = Random.Range(0,existCount);
-				if(attackSelect == 0){
-					ChangeGameStatus(4);
-				}else{
-					for(int i = 0;i < playerExists.Length;i++){
-						if(playerExists[i]) attackSelect--;
-						if(attackSelect == 0){
-							attackTarget = i;
-							d4Value = Random.Range(1,4);
-							d6Value = Random.Range(1,6);
-							attackEnemy();
-							break;
-						}
-					}
-				}
-			}else{
-				buttonPanel.SetActive(true);
-                bool attackPossibility = false;
-				for(int i = 0;i<playerExists.Length;i++){
-					if(playerExists[i]){
-						attackButtons[i+1].SetActive(true);
-                        attackPossibility = true;
-					}
-				}
-                if (!masamune || !attackPossibility)
+            case -1:
+                if (!characters[playerId].reveal)
                 {
-                    attackButtons[0].SetActive(true);
+                    activateOpenButtons(true);
                 }
-            }
-			break;
-		case 4:
-			Debug.Log ("finished");
-            masamune = false;
-            handgun = false;
-            if (!wisdom)
-            {
-                playerId++;
-                playerId = playerId % playerNum;
-            }
-            wisdom = false;
-			ChangeGameStatus(0);
-			break;
-		case 5:
-			Debug.Log ("game finished");
-			break;
+                else
+                {
+                    if (characters[playerId].fullname == CharacterState.CharacterFullName.Catherine) //キャサリンの特殊能力
+                    {
+                        int score = playerStates[playerId].GetComponent<PlayerStateManager>().getScore();
+                        if(score > 0) score--;
+                        playerStates[playerId].GetComponent<PlayerStateManager>().moveScore(score);
+                    }
+                    ChangeGameStatus(0);
+                }
+                break;
+		    case 0:
+                /* 守護天使の効果切れ */
+                    angelId = -1;
+                /*ダイスロール時のカメラに切り替え*/
+                StartCoroutine(TransCamera(1.0f));
+                compass = characters[playerId].findEquipment("Compass");
+
+                if (!mainPlayer)
+                {
+				    d4Value = Random.Range(1,4);
+				    d6Value = Random.Range(1,6);
+				    ChangeGameStatus(2);
+			    }else{
+				    /* ダイスのアクティブ化 */
+				    dicesActivate (true);
+			    }
+			    break;
+		    case 1:
+			    /* ダイスの値取得 */
+    //            Debug.Log(compass);
+    //			StartCoroutine(getDiceValue());
+			    break;
+		    case 2:
+                /*通常のカメラに切り替え*/
+                StartCoroutine(TransCamera(1.0f));
+			    /* コマ移動 */
+			    getStageIndex(d6Value+d4Value);
+			    break;
+		    case 3:
+			    Debug.Log ("playerId = " + playerId);
+                masamune = false;
+                handgun = false;
+                /* マサムネの所持確認 */
+                if(characters[playerId].findEquipment("Masamune")){
+                    masamune = true;
+                }
+                /* 拳銃の所持確認 */
+                if(characters[playerId].findEquipment("HandGun")){
+                    handgun = true;
+                }
+			    /* 攻撃の処理 */
+			    checkPlayerExist();
+                if (!mainPlayer)
+                {
+				    int existCount = 0;
+				    for(int i = 0;i < playerExists.Length;i++){
+					    if(playerExists[i]) existCount++;
+				    }
+				    int attackSelect = Random.Range(0,existCount);
+				    if(attackSelect == 0){
+					    ChangeGameStatus(4);
+				    }else{
+					    for(int i = 0;i < playerExists.Length;i++){
+						    if(playerExists[i]) attackSelect--;
+						    if(attackSelect == 0){
+							    attackTarget = i;
+							    d4Value = Random.Range(1,4);
+							    d6Value = Random.Range(1,6);
+							    attackEnemy();
+							    break;
+						    }
+					    }
+				    }
+			    }else{
+				    buttonPanel.SetActive(true);
+                    bool attackPossibility = false;
+				    for(int i = 0;i<playerExists.Length;i++){
+					    if(playerExists[i]){
+						    attackButtons[i+1].SetActive(true);
+                            attackPossibility = true;
+					    }
+				    }
+                    if (!masamune || !attackPossibility)
+                    {
+                        attackButtons[0].SetActive(true);
+                    }
+                }
+			    break;
+		    case 4:
+			    Debug.Log ("finished");
+                masamune = false;
+                handgun = false;
+                if (!wisdom)
+                {
+                    if (characters[playerId].fullname == CharacterState.CharacterFullName.Wight && wightCounter > 0)
+                    {
+                        wightCounter--;
+                    }
+                    else
+                    {
+                        playerId++;
+                        playerId = playerId % playerNum;
+                    }
+                }
+                wisdom = false;
+			    ChangeGameStatus(-1);
+			    break;
+		    case 5:
+			    Debug.Log ("game finished");
+			    break;
 		}
 	}
 
@@ -448,7 +520,9 @@ public class SHManeger : MonoBehaviour {
 	/* ****移動効果ここから**** */
 	/* ********************** */
 	/* ********************** */
-	bool selecting;
+
+    bool selecting;
+    int tmppid;
 
 	/* 老婆の庵 */
 	public void drawGreenCard(){
@@ -464,14 +538,11 @@ public class SHManeger : MonoBehaviour {
 		selecting = true;
 	}
 
-    int tmppid;
-
 	public void greenCardAction(int pid){
         tmppid = pid;
 		/* オババカードの各効果 */
-        Debug.Log("case:" + (greenCards[greenCount] + 1));
 		switch (greenCards [greenCount]+1) {
-            case 1:
+            case 1: case 14: //NかHなら装備を渡すor1ダメージ
                 if (characters[pid].isHunter())
                 {
                     choiseButtons.SetActive(true);
@@ -481,7 +552,7 @@ public class SHManeger : MonoBehaviour {
                     greenCardAfter();
                 }
                 break;
-            case 2: case 3:
+            case 2: case 3: //Hなら1ダメージ
     			if(characters[pid].isHunter()){
 	    			int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
 		    		tmpScore++;
@@ -489,130 +560,111 @@ public class SHManeger : MonoBehaviour {
 			    }
                 greenCardAfter();
     			break;
-    		case 4:
-			if(characters[pid].isOver(12)){
-				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
-				tmpScore += 2;
-				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
-			}
-            greenCardAfter();
-			break;
-            case 5:
-            if (characters[pid].isHunter() || characters[pid].isShadow())
-            {
-                choiseButtons.SetActive(true);
-            }
-            else
-            {
+    		case 4: //HP>=12なら2ダメージ
+			    if(characters[pid].isOver(12)){
+				    int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				    tmpScore += 2;
+				    playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			    }
                 greenCardAfter();
-            }
-            break;
-            case 6:
-            if (characters[pid].isShadow())
-            {
-				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
-				tmpScore++;
-				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
-			}
-            greenCardAfter();
-			break;
-            case 7:
-            if (characters[pid].isHunter() || characters[pid].isShadow())
-            {
-                choiseButtons.SetActive(true);
-            }
-            else
-            {
+			    break;
+            case 5: case 7: //HかSなら装備を渡すor1ダメージ
+                if (characters[pid].isHunter() || characters[pid].isShadow())
+                {
+                    choiseButtons.SetActive(true);
+                }
+                else
+                {
+                    greenCardAfter();
+                }
+                break;
+            case 6: //Sなら1ダメージ
+                if (characters[pid].isShadow())
+                {
+				    int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				    tmpScore++;
+				    playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			    }
                 greenCardAfter();
-            }
+			    break;
+            case 8: case 12: //NかSなら装備を渡すor1ダメージ
+                if (characters[pid].isNeutral() || characters[pid].isShadow())
+                {
+                    choiseButtons.SetActive(true);
+                }
+                else
+                {
+                    greenCardAfter();
+                }
 
-            break;
-            case 8:
-            if (characters[pid].isNeutral() || characters[pid].isShadow())
-            {
-                choiseButtons.SetActive(true);
-            }
-            else
-            {
+                break;
+            case 9: //Hなら1回復(それ以外なら1ダメージ)
+                if (characters[pid].isHunter())
+                {
+                    int tmpScore = playerStates[pid].GetComponent<PlayerStateManager>().getScore();
+                    if (tmpScore > 0) tmpScore--;
+                    playerStates[pid].GetComponent<PlayerStateManager>().moveScore(tmpScore);
+                }
+                else
+                {
+                    int tmpScore = playerStates[pid].GetComponent<PlayerStateManager>().getScore();
+                    tmpScore++;
+                    playerStates[pid].GetComponent<PlayerStateManager>().moveScore(tmpScore);
+                }
                 greenCardAfter();
-            }
-
-            break;
-            case 9:
-            if (characters[pid].isHunter())
-            {
-				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
-				if(tmpScore > 0) tmpScore--;
-				else tmpScore++;
-				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
-			}
-            greenCardAfter();
-			break;
-	    	case 10:
-            if (characters[pid].isNeutral())
-            {
-				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
-				if(tmpScore > 0) tmpScore--;
-				else tmpScore++;
-				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
-			}
-            greenCardAfter();
-			break;
-    		case 11:
-			if(characters[pid].isUnder(11)){
-				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
-				tmpScore++;
-				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
-			}
-            greenCardAfter();
-			break;
-            case 12:
-            if (characters[pid].isNeutral() || characters[pid].isShadow())
-            {
-                choiseButtons.SetActive(true);
-            }
-            else
-            {
+    			break;
+            case 10: //Nなら1回復(それ以外なら1ダメージ)
+                if (characters[pid].isNeutral())
+                {
+                    int tmpScore = playerStates[pid].GetComponent<PlayerStateManager>().getScore();
+                    if (tmpScore > 0) tmpScore--;
+                    playerStates[pid].GetComponent<PlayerStateManager>().moveScore(tmpScore);
+                }
+                else
+                {
+                    int tmpScore = playerStates[pid].GetComponent<PlayerStateManager>().getScore();
+                    tmpScore++;
+                    playerStates[pid].GetComponent<PlayerStateManager>().moveScore(tmpScore);
+                }
                 greenCardAfter();
-            }
-
-            break;
-            case 13:
-            if (characters[pid].isShadow())
-            {
-				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
-				tmpScore += 2;
-				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
-			}
-            greenCardAfter();
-			break;
-            case 14:
-            if (characters[pid].isNeutral() || characters[pid].isHunter())
-            {
-                choiseButtons.SetActive(true);
-            }
-            else
-            {
+    			break;
+    		case 11: //HP<=11なら1ダメージ
+			    if(characters[pid].isUnder(11)){
+				    int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				    tmpScore++;
+				    playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			    }
                 greenCardAfter();
-            }
-
-            break;
-            case 16:
-            if (characters[pid].isShadow())
-            {
-				int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
-				if(tmpScore > 0) tmpScore--;
-				else tmpScore++;
-				playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
-			}
-            greenCardAfter();
-			break;
+			    break;
+            case 13: //Sなら2ダメージ
+                if (characters[pid].isShadow())
+                {
+				    int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				    tmpScore += 2;
+				    playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			    }
+                greenCardAfter();
+			    break;
+            case 15: //相手にカードを見せる(実装する？)
+                greenCardAfter();
+                break;
+            case 16: //Sなら1回復(それ以外なら1ダメージ)
+                if (characters[pid].isShadow())
+                {
+				    int tmpScore = playerStates [pid].GetComponent <PlayerStateManager>().getScore ();
+				    if(tmpScore > 0) tmpScore--;
+				    else tmpScore++;
+				    playerStates[pid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			    }
+                greenCardAfter();
+			    break;
             default:
-            greenCardAfter();
+                greenCardAfter();
             break;
 		}
 	}
 
+    /* オババ終了処理 */
     public void greenCardAfter()
     {
         greens[greenCards[greenCount]].SetActive(false);
@@ -626,20 +678,25 @@ public class SHManeger : MonoBehaviour {
         ChangeGameStatus(3);
     }
 
-    public void handOffEquip()
-    {
-        choiseButtons.SetActive(false);
-        ChangeGameStatus(3);
-    }
 
-    public void getDamage()
-    {
-        choiseButtons.SetActive(false);
-        int tmpScore = playerStates[tmppid].GetComponent<PlayerStateManager>().getScore();
-        tmpScore++;
-        playerStates[tmppid].GetComponent<PlayerStateManager>().moveScore(tmpScore);
-        ChangeGameStatus(3);
-    }
+    /* ダメージを受けるか装備を渡す */
+
+        /* 装備を渡す（未実装） */
+        public void handOffEquip()
+        {
+            choiseButtons.SetActive(false);
+            ChangeGameStatus(3);
+        }
+    
+        /* ダメージを受ける */
+        public void getDamage()
+        {
+            choiseButtons.SetActive(false);
+            int tmpScore = playerStates[tmppid].GetComponent<PlayerStateManager>().getScore();
+            tmpScore++;
+            playerStates[tmppid].GetComponent<PlayerStateManager>().moveScore(tmpScore);
+            ChangeGameStatus(3);
+        }
 	
 	/* 教会 */
 	public void drawWhiteCard(){
@@ -648,14 +705,19 @@ public class SHManeger : MonoBehaviour {
 		
 		whites [whiteCards [whiteCount]].SetActive (true);
 		/* 白カードの各効果 */
-		switch (whiteCards [whiteCount]+1) {
+//		switch (whiteCards [whiteCount]+1) {
+        int whiteDebug = 1;
+        switch (whiteDebug)
+        {
             case 1:
             /* 神秘のコンパス */
                 characters[playerId].addEquipment("Compass");
+                drawWhiteCardAfter();
                 break;
             case 2:
             /* 封印の知恵(もう一度手番を行う) */
                 wisdom = true;
+                drawWhiteCardAfter();
                 break;
             case 3:
                 /* 癒やしの聖水 */
@@ -663,6 +725,7 @@ public class SHManeger : MonoBehaviour {
                 if (tmpScore > 2) tmpScore -= 2;
                 else tmpScore = 0;
 				playerStates[playerId].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+                drawWhiteCardAfter();
                 break;
             case 4:
                 /* 魔除けのお守り */
@@ -670,26 +733,39 @@ public class SHManeger : MonoBehaviour {
                 break;
             case 5:
                 /* 恩恵 */
+                if(mainPlayer)
+                {
+                    buttonPanel.SetActive(true);
+                    activateSelectButtons(true);
+                    selectButtons[playerId].SetActive(false);
+                    selectingAction = "benefit";
+                    selecting = true;
+                }
                 break;
             case 6:
                 /* 聖者のローブ */
                 characters[playerId].addEquipment("Robe");
+                drawWhiteCardAfter();
                 break;
             case 7:
                 /* チョコレート */
                 //該当キャラクターなし
+                drawWhiteCardAfter();
                 break;
             case 8:
                 /* 銀のロザリオ */
                 characters[playerId].addEquipment("Rosary");
+                drawWhiteCardAfter();
                 break;
             case 9:
                 /* ロンギヌスの槍 */
                 characters[playerId].addEquipment("Longinus");
+                drawWhiteCardAfter();
                 break;
             case 10:
                 /* 守護天使 */
                 angelId = playerId; //攻撃対象のIdがangelIdならノーダメ
+                drawWhiteCardAfter();
                 break;
             case 11:
                 /* 裁きの閃光 */
@@ -702,31 +778,43 @@ public class SHManeger : MonoBehaviour {
                         playerStates[i].GetComponent<PlayerStateManager>().moveScore(tmpScore);
                     }
                 }
+                drawWhiteCardAfter();
                 break;
             case 12:
                 /* 応急手当 */
                 break;
             case 13:
+                /* 神秘のブローチ */
                 characters[playerId].addEquipment("Brooch");
+                drawWhiteCardAfter();
                 break;
             case 14:
                 /* 闇を祓う鏡 */
                 //正体公開実装後実装
+                drawWhiteCardAfter();
                 break;
             case 15:
                 /* 光臨 */
                 //正体公開実装後
+                drawWhiteCardAfter();
                 break;
         }
-		whites [whiteCards [whiteCount]].SetActive (false);
-		whiteCount++;
-		if (whiteCount == whiteCards.Length) {
-			randomize (whiteCards);
-			whiteCount = 0;
-		}
-		Debug.Log ("finish dwc");
-		ChangeGameStatus(3);
 	}
+
+    public void drawWhiteCardAfter()
+    {
+        whites[whiteCards[whiteCount]].SetActive(false);
+        whiteCount++;
+        if (whiteCount == whiteCards.Length)
+        {
+            randomize(whiteCards);
+            whiteCount = 0;
+        }
+        Debug.Log("finish dwc");
+        ChangeGameStatus(3);
+
+    }
+
 
 	/* 共同墓地 */
 	public void drawBlackCard(){
@@ -735,7 +823,6 @@ public class SHManeger : MonoBehaviour {
 		
 		blacks [blackCards [blackCount]].SetActive (true);
 
-//        int black_for_debug = 1;
 
 		/* 黒カードの各効果 */
 		switch(blackCards[blackCount]+1){
@@ -861,7 +948,26 @@ public class SHManeger : MonoBehaviour {
 		attackTarget = id;
 		dicesActivate (true);
 	}
-	
+
+    public void attackEnemy()
+    {
+        int robeEffect = 0;
+        if (attackTarget != angelId)
+        {
+            if (characters[playerId].findEquipment("Robe") || characters[attackTarget].findEquipment("Robe"))
+            {
+                robeEffect = 1;
+            }
+            int tmpScore = playerStates[attackTarget].GetComponent<PlayerStateManager>().getScore();
+            int damage = Mathf.Abs(d6Value - d4Value);
+            damage -= robeEffect;
+            if(damage < 0) damage = 0;
+            tmpScore += damage;
+            playerStates[attackTarget].GetComponent<PlayerStateManager>().moveScore(tmpScore);
+        }
+        ChangeGameStatus(4);
+    }
+
 	public void activateAttackButtons(bool flag){
 		foreach(GameObject obj in attackButtons){
 			obj.SetActive(flag);
@@ -871,36 +977,53 @@ public class SHManeger : MonoBehaviour {
 		foreach(GameObject obj in selectButtons){
 			obj.SetActive(flag);
 		}
+        buttonPanel.SetActive(flag);
 	}
 
 
 	public void selectCharacter(int id){
+        Debug.Log("id:" + id + " selectingAction:" + selectingAction);
 		switch (selectingAction) {
-		case "bigspider":
-			buttonPanel.SetActive (false);
-			int tmpScore = playerStates [id].GetComponent <PlayerStateManager>().getScore ();
-			tmpScore += 2;
-			playerStates[id].GetComponent<PlayerStateManager>().moveScore (tmpScore);
-			tmpScore = playerStates [playerId].GetComponent <PlayerStateManager>().getScore ();
-			tmpScore += 2;
-			playerStates[playerId].GetComponent<PlayerStateManager>().moveScore (tmpScore);
-			drawBlackCardAfter ();
-			break;
-		case "bat":
-			buttonPanel.SetActive (false);
-			tmpScore = playerStates [id].GetComponent <PlayerStateManager>().getScore ();
-			tmpScore += 2;
-			playerStates[id].GetComponent<PlayerStateManager>().moveScore (tmpScore);
-			tmpScore = playerStates [playerId].GetComponent <PlayerStateManager>().getScore ();
-			tmpScore--;
-            if (tmpScore < 0) tmpScore = 0;
-			playerStates[playerId].GetComponent<PlayerStateManager>().moveScore (tmpScore);
-			drawBlackCardAfter ();
-			break;
-		case "obaba":
-			buttonPanel.SetActive (false);
-			greenCardAction (id);
-			break;
+		    case "bigspider":
+			    buttonPanel.SetActive (false);
+			    int tmpScore = playerStates [id].GetComponent <PlayerStateManager>().getScore ();
+			    tmpScore += 2;
+			    playerStates[id].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			    tmpScore = playerStates [playerId].GetComponent <PlayerStateManager>().getScore ();
+			    tmpScore += 2;
+			    playerStates[playerId].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			    drawBlackCardAfter ();
+			    break;
+		    case "bat":
+			    buttonPanel.SetActive (false);
+			    tmpScore = playerStates [id].GetComponent <PlayerStateManager>().getScore ();
+			    tmpScore += 2;
+			    playerStates[id].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			    tmpScore = playerStates [playerId].GetComponent <PlayerStateManager>().getScore ();
+			    tmpScore--;
+                if (tmpScore < 0) tmpScore = 0;
+			    playerStates[playerId].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+			    drawBlackCardAfter ();
+			    break;
+		    case "obaba":
+			    buttonPanel.SetActive (false);
+			    greenCardAction (id);
+			    break;
+            case "benefit":
+                tmppid = id;
+                diceAction = "benefit";
+			    dicesActivate (true);
+                break;
+            case "George":
+                tmppid = id;
+                diceAction = "George";
+                buttonPanel.SetActive(true);
+			    dicesActivate (true);
+                break;
+            case "Fuka":
+                playerStates[id].GetComponent<PlayerStateManager>().moveScore(7);
+                ChangeGameStatus(0);
+                break;
 		}
 		selecting = false;
 	}
@@ -919,19 +1042,9 @@ public class SHManeger : MonoBehaviour {
 	}
 
 
-	public void getAttackValue(){
-		StartCoroutine(getDiceValue());
-	}
-	
-	public void attackEnemy(){
-        if (attackTarget != angelId)
-        {
-            int tmpScore = playerStates[attackTarget].GetComponent<PlayerStateManager>().getScore();
-            tmpScore += Mathf.Abs(d6Value - d4Value);
-            playerStates[attackTarget].GetComponent<PlayerStateManager>().moveScore(tmpScore);
-        }
-		ChangeGameStatus (4);
-	}
+    /*                                */
+    /*　     ダイス処理ここから　     */
+    /*                                */
 
 	public void checkPlayerExist(){
 		for(int i = 0;i<playerExists.Length;i++){
@@ -949,9 +1062,37 @@ public class SHManeger : MonoBehaviour {
 			}
 		}
 	}
+
+    public void selectDiceAction(){
+        int tmpScore;
+        switch (diceAction)
+        {
+            case "benefit":
+                tmpScore = playerStates [tmppid].GetComponent <PlayerStateManager>().getScore ();
+                tmpScore -= d6Value;
+                if (tmpScore < 0) tmpScore = 0;
+			    playerStates[tmppid].GetComponent<PlayerStateManager>().moveScore (tmpScore);
+                drawWhiteCardAfter();
+                selectingAction = "";
+                diceAction = "";
+                break;
+            case "George":
+                tmpScore = playerStates[tmppid].GetComponent<PlayerStateManager>().getScore();
+                tmpScore += d4Value;
+                playerStates[tmppid].GetComponent<PlayerStateManager>().moveScore(tmpScore);
+                selectingAction = "";
+                diceAction = "";
+                ChangeGameStatus(0);
+                break;
+
+        }
+        selectingAction = "";
+        diceAction = "";
+    }
 	
 
-	IEnumerator getDiceValue(){
+	public IEnumerator getDiceValue(){
+        Debug.Log("Get Dice Value start!(" + playerId + ")");
 		d6Value = 0;
 		d4Value = 0;
 		while (d6.GetComponent<Die>().rolling || d4.GetComponent<Die>().rolling) {
@@ -960,15 +1101,48 @@ public class SHManeger : MonoBehaviour {
 		d6Value = d6.GetComponent<Die_d6>().value;
 		d4Value = d4.GetComponent<Die_d6>().value;
 		d4Value = d4Value % 4 + 1;
-        if (masamune) d6Value = 0;
+        if (masamune && gameStatus == 3) d6Value = 0;
 		dicesActivate (false);
+        diceroll.rolling = false;
         Debug.Log("d6:" + d6Value + " d4:" + d4Value);
+        Debug.Log("Compass : " + compass + "(" + playerId + ")");
+        if (diceAction != "")
+        {
+            Debug.Log("diceaction");
+            selectDiceAction();
+        }
+        else
+        {
+            Debug.Log("not diceaction");
+            if (gameStatus == 0)
+            {
+                if (compass)
+                {
+                    if (compass_first == -1)
+                    {
+                        compass_first = d6Value + d4Value;
+                        dicesActivate(true);
+                    }
+                    else
+                    {
+                        compass_second = d6Value + d4Value;
+                        compassActivate(true);
+                    }
+                }
+                else
+                {
+                    d4Value = 2;
+                    d6Value = 4;
+                    ChangeGameStatus(2);
+                }
+            }
+            else if (gameStatus == 3)
+            {
+                attackEnemy();
+            }
+        }
 
-		if (gameStatus == 1) {
-			ChangeGameStatus (2);
-		} else if (gameStatus == 3) {
-			attackEnemy();
-		}
+        yield break;
 	}
 
     IEnumerator waitSeconds(int sec){
@@ -991,17 +1165,82 @@ public class SHManeger : MonoBehaviour {
 		d6.transform.position = new Vector3(-2,14,0);
 		d4.transform.rotation = Quaternion.Euler (Random.Range (0, 360), Random.Range (0, 360), Random.Range (0, 360));
 		d6.transform.rotation = Quaternion.Euler (Random.Range (0, 360), Random.Range (0, 360), Random.Range (0, 360));
-		d4.SetActive(flag);
-		d4.GetComponent<Rigidbody>().Sleep();
-        if (!masamune)
+        if (selectingAction != "George")
+        {
+            d4.SetActive(flag);
+            d4.GetComponent<Rigidbody>().Sleep();
+        }
+        if (!(masamune || selectingAction == "benefit"))
         {
             d6.SetActive(flag);
             d6.GetComponent<Rigidbody>().Sleep();
         }
-
-		buttonPanel.SetActive (flag);
+        buttonPanel.SetActive(flag);
 		diceButton.SetActive(flag);
 	}
+
+    void compassActivate(bool flag)
+    {
+        buttonPanel.SetActive(flag);
+        firstButton.SetActive(flag);
+        secondButton.SetActive(flag);
+        firstButton.transform.FindChild("Text").GetComponent<Text>().text = compass_first.ToString();
+        secondButton.transform.FindChild("Text").GetComponent<Text>().text = compass_second.ToString();
+    }
+
+    public void selectCompass(int num)
+    {
+        compassActivate(false);
+        if (num == 1)
+        {
+            getStageIndex(compass_first);
+        }
+        else
+        {
+            getStageIndex(compass_second);
+        }
+        compass_first = -1;
+    }
+
+    /* 正体公開 */
+    public void activateOpenButtons(bool flag)
+    {
+        buttonPanel.SetActive(flag);
+        openButton1.SetActive(flag);
+        openButton2.SetActive(flag);
+    }
+
+    public void revealIdentity()
+    {
+        characters[playerId].reveal = true;
+        if (characters[playerId].name == CharacterState.CharacterName.G) //Georgeの特殊効果
+        {
+            activateSelectButtons(true);
+            selectButtons[playerId].SetActive(false);
+            selectingAction = "George";
+            selecting = true;
+        }
+        else if (characters[playerId].name == CharacterState.CharacterName.F) //Fukaの特殊能力
+        {
+            activateSelectButtons(true);
+            selectButtons[playerId].SetActive(false);
+            selectingAction = "Fuka";
+            selecting = true;
+        }
+        else if(characters[playerId].fullname == CharacterState.CharacterFullName.Wight) //Wightの特殊能力
+        {
+            for (int i = 0; i < playerNum; i++)
+            {
+                if (i == playerId) continue;
+                if (playerStates[i].GetComponent<PlayerStateManager>().dead) wightCounter++;
+            }
+        }
+        else
+        {
+            dicesActivate(true);
+            ChangeGameStatus(0);
+        }
+    }
 
     //ここから追加
     /*フェードイン・アウトの線画*/

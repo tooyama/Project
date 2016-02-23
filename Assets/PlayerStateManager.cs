@@ -4,6 +4,7 @@ using System.Collections;
 public class PlayerStateManager : MonoBehaviour {
 
 	public int score;
+    public bool dead = false;
 	int maxHP = 0;
 	GameObject[] HP;
 	// Use this for initialization

@@ -6,6 +6,7 @@ public class DiceRoll : MonoBehaviour
     public Vector3 move = new Vector3(0,0,0);
 
 	public SHManeger shm;
+    public bool rolling = false;
 
 	void Start () 
     {
@@ -20,7 +21,7 @@ public class DiceRoll : MonoBehaviour
     
 	void diceRoll()
     {
-		Debug.Log ("diceroll start");
+//		Debug.Log ("diceroll start");
 
         Rigidbody[] rigidArray = gameObject.GetComponentsInChildren<Rigidbody>();
 
@@ -33,20 +34,28 @@ public class DiceRoll : MonoBehaviour
 			rigid.AddForce(tempMove);
         }
 
-		Debug.Log ("force added");
+//		Debug.Log ("force added");
+        if (!rolling)
+        {
+            Invoke("changeSHGameStatus", .2f);
+            rolling = true;
+        }
 
-		Invoke ("changeSHGameStatus", .2f);
-
-		Debug.Log ("css invoke");
+//		Debug.Log ("css invoke");
         //gameObject.GetComponent<Rigidbody>().WakeUp();
     }
 
 	void changeSHGameStatus(){
-		Debug.Log ("css start");
-		int gameStatus = shm.gameStatus + 1;
+//		Debug.Log ("css start");
+/*		int gameStatus = shm.gameStatus + 1;
 		Debug.Log (gameStatus);
 		if(gameStatus == 1) shm.ChangeGameStatus (gameStatus);
-		if(gameStatus == 4) shm.getAttackValue ();
+		if(gameStatus == 4) shm.getAttackValue ();*/
+
+        StopCoroutine(shm.getDiceValue());
+
+        StartCoroutine(shm.getDiceValue());
+
 	}
 
 	void FixedUpdate () 

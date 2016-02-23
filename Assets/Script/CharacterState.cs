@@ -11,6 +11,15 @@ public class CharacterState : MonoBehaviour
         F,
         W
     }
+    public enum CharacterFullName
+    {
+        Catherine,
+        Charles,
+        George,
+        Fuka,
+        Werewolf,
+        Wight
+    }
 
     public enum CharacterType
     {
@@ -22,7 +31,9 @@ public class CharacterState : MonoBehaviour
     public int maxHp = 0;
     public CharacterName name = CharacterName.C;
     public CharacterType type = CharacterType.Neutral;
+    public CharacterFullName fullname;
     public int attackPower = 0;
+    public bool reveal = false;
 
     List<string> equipment = new List<string>();
 
