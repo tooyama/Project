@@ -19,6 +19,7 @@ TagManager:
   - stage
   - choiseButton
   - compassButton
+  - choiseButtons
   layers:
   - Default
   - TransparentFX

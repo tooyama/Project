@@ -69,6 +69,11 @@ public class CharacterState : MonoBehaviour
         return equipment;
     }
 
+    public bool hasEquip()
+    {
+        return equipment.Count > 0;
+    }
+
     public bool isNeutral()
     {
         return type == CharacterType.Neutral;
