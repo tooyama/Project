@@ -2347,7 +2347,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 849061310}
         m_MethodName: equipHandoffSelect
-        m_Mode: 1
+        m_Mode: 6
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine

@@ -39,6 +39,7 @@ public class CharacterState : MonoBehaviour
 
     public void addEquipment(string equip)
     {
+        Debug.Log(fullname + " / " + equip);
         equipment.Add(equip);
         if (equip.Equals("bigAxe") || equip.Equals("knife") || equip.Equals("ChainSaw"))
             attackPower++;

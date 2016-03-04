@@ -23,7 +23,7 @@ public class SHManeger : MonoBehaviour {
 	int[] whiteCards = new int[15];
 	int[] blackCards = new int[16];
 
-	GameObject[] greens,whites,blacks,effects,attackButtons,selectButtons,playerStates,monsters,equipButtons,choiseButtonArray;
+	GameObject[] greens,whites,blacks,effects,attackButtons,selectButtons,playerStates,monsters,equipButtons,choiseButtonArray,hdButtons;
 
 	CharacterState[] characters;
 
@@ -39,7 +39,7 @@ public class SHManeger : MonoBehaviour {
 
 	int playerId,attackTarget,angelId = -1,compass_first = -1,compass_second,wightCounter = 0;
 
-    bool masamune,handgun,wisdom,machineGun;
+    bool masamune,handgun,wisdom,ritual = false;
 
     bool mainPlayer = true;
 
@@ -156,6 +156,8 @@ public class SHManeger : MonoBehaviour {
 		drawButtons = GameObject.FindGameObjectWithTag ("drawButton");
         stageButtons = GameObject.FindGameObjectWithTag("stageButton");
         choiseButtons = GameObject.FindGameObjectWithTag("choiseButton");
+        /* ダメージor装備ボタン */
+        choiseButtonArray = GameObject.FindGameObjectsWithTag("choiseButtons");
 
 		/* プレイヤーセット */
 		monsters = GameObject.FindGameObjectsWithTag ("Monster");
@@ -222,8 +224,6 @@ public class SHManeger : MonoBehaviour {
         openButton1.SetActive(false);
         openButton2.SetActive(false);
 
-        /* ダメージor装備ボタン */
-        choiseButtonArray = GameObject.FindGameObjectsWithTag("choiseButtons");
 
 
 		/* イベントパネルの位置情報のセット */
@@ -432,23 +432,29 @@ public class SHManeger : MonoBehaviour {
 			    break;
 		    case 4:
 			    Debug.Log ("finished");
-                checkWinner();
-                masamune = false;
-                handgun = false;
-                if (!wisdom)
+                if (checkWinner())
                 {
-                    if (characters[playerId].fullname == CharacterState.CharacterFullName.Wight && wightCounter > 0)
-                    {
-                        wightCounter--;
-                    }
-                    else
-                    {
-                        playerId++;
-                        playerId = playerId % playerNum;
-                    }
+                    ChangeGameStatus(5);
                 }
-                wisdom = false;
-			    ChangeGameStatus(-1);
+                else
+                {
+                    masamune = false;
+                    handgun = false;
+                    if (!wisdom)
+                    {
+                        if (characters[playerId].fullname == CharacterState.CharacterFullName.Wight && wightCounter > 0)
+                        {
+                            wightCounter--;
+                        }
+                        else
+                        {
+                            playerId++;
+                            playerId = playerId % playerNum;
+                        }
+                    }
+                    wisdom = false;
+                    ChangeGameStatus(-1);
+                }
 			    break;
 		    case 5:
 			    Debug.Log ("game finished");
@@ -556,6 +562,7 @@ public class SHManeger : MonoBehaviour {
 
 	public void greenCardAction(int pid){
         tmppid = pid;
+        currentAction = "Green";
 		/* オババカードの各効果 */
 		switch (greenCards [greenCount]+1) {
             case 1: case 14: //NかHなら装備を渡すor1ダメージ
@@ -625,8 +632,14 @@ public class SHManeger : MonoBehaviour {
             greenCount = 0;
         }
         Debug.Log("finish dgc");
-        checkWinner();
-        ChangeGameStatus(3);
+        if (checkWinner())
+        {
+            ChangeGameStatus(5);
+        }
+        else
+        {
+            ChangeGameStatus(3);
+        }
     }
 
 
@@ -637,31 +650,35 @@ public class SHManeger : MonoBehaviour {
     {
         buttonPanel.SetActive(flag);
         choiseButtons.SetActive(flag);
+        Debug.Log("Choise Button Array Length:" + choiseButtonArray.Length + " flag:" + flag);
         if (flag)
         {
             for (int i = 0; i < choiseButtonArray.Length; i++)
             {
-                Debug.Log("Text:" + choiseButtonArray[i].transform.FindChild("Text").GetComponent<Text>().text + " hasEquip" + characters[tmppid].hasEquip() + " equipCount:" + characters[tmppid].getEquipList().Count);
-                if (choiseButtonArray[i].transform.FindChild("Text").GetComponent<Text>().text == "装備を渡す" && !characters[tmppid].hasEquip())
+                Debug.Log("Text:" + choiseButtonArray[i].transform.FindChild("Text").GetComponent<Text>().text + " not hasEquip" + !characters[tmppid].hasEquip() + " equipCount:" + characters[tmppid].getEquipList().Count);
+                if (choiseButtonArray[i].transform.FindChild("Text").GetComponent<Text>().text == "装備を渡す")
                 {
-                    choiseButtonArray[i].SetActive(false);
+                    choiseButtonArray[i].SetActive(characters[tmppid].hasEquip());
                 }
             }
         }
     }
 
     /* 装備を渡す */
-    public void equipHandoffSelect()
+    public void equipHandoffSelect(bool fromPlayer)
     {
+        int fromId;
+        if (fromPlayer) fromId = playerId;
+        else fromId = tmppid;
         choiseButtons.SetActive(false);
         buttonPanel.SetActive(true);
-        equipButtons = new GameObject[characters[tmppid].getEquipList().Count];
+        equipButtons = new GameObject[characters[fromId].getEquipList().Count];
         int count = 0;
-        foreach (string equip in characters[tmppid].getEquipList())
+        foreach (string equip in characters[fromId].getEquipList())
         {
             equipButtons[count] = Instantiate(buttonPrefab, new Vector3(buttonX + count * xGap, buttonY + count * yGap + buttonZ + count * zGap), Quaternion.identity) as GameObject;
             equipButtons[count].transform.SetParent(buttonPanel.GetComponent<Transform>());
-            equipButtons[count].GetComponent<Button>().onClick.AddListener(() => handoffEquip(equip));
+            equipButtons[count].GetComponent<Button>().onClick.AddListener(() => handoffEquip(equip,fromPlayer));
             equipButtons[count].GetComponent<Button>().onClick.AddListener(() => activateEquipButtons(false));
             equipButtons[count].transform.FindChild("Text").GetComponent<Text>().text = equip;
             count++;
@@ -676,19 +693,31 @@ public class SHManeger : MonoBehaviour {
         }
     }
 
-    public void handoffEquip(string equip)
+    public void handoffEquip(string equip,bool fromPlayer)
     {
+        int fromId, toId;
+        if (fromPlayer)
+        {
+            fromId = playerId;
+            toId = tmppid;
+        }
+        else
+        {
+            fromId = tmppid;
+            toId = playerId;
+        }
+        characters[fromId].removeEquipment(equip);
+        characters[toId].addEquipment(equip);
         switch (currentAction)
         {
             case "Green":
-                characters[tmppid].removeEquipment(equip);
-                characters[playerId].addEquipment(equip);
                 greenCardAfter();
                 break;
             case "Black":
-                characters[playerId].removeEquipment(equip);
-                characters[tmppid].addEquipment(equip);
                 drawBlackCardAfter();
+                break;
+            case "Alter":
+                ChangeGameStatus(3);
                 break;
         }
     }
@@ -823,6 +852,7 @@ public class SHManeger : MonoBehaviour {
 		
 		blacks [blackCards [blackCount]].SetActive (true);
 
+        Debug.Log("Draw Black Card No." + (blackCards[blackCount] + 1));
 
 		/* 黒カードの各効果 */
 		switch(blackCards[blackCount]+1)
@@ -839,6 +869,11 @@ public class SHManeger : MonoBehaviour {
                     buttonPanel.SetActive(true);
                     activateSelectButtons(true);
                     selectButtons[playerId].SetActive(false);
+                    /* 魔除けのお守り効果 */
+                    for (int i = 0; i < playerNum; i++)
+                    {
+                        if (characters[i].findEquipment("Amulet")) selectButtons[i].SetActive(false);
+                    }
                     selectingAction = "bigspider";
                     selecting = true;
                 }
@@ -878,6 +913,41 @@ public class SHManeger : MonoBehaviour {
                 }
                 drawBlackCardAfter();
                 break;
+            case 7:
+            case 11:
+                /* 気まぐれな小悪魔 */
+                if (mainPlayer)
+                {
+                    bool canRob = false;
+                    for (int i = 0; i < playerNum; i++)
+                    {
+                        if (i != playerId && characters[i].hasEquip())
+                        {
+                            canRob = true;
+                            break;
+                        }
+                    }
+                    if (canRob)
+                    {
+                        buttonPanel.SetActive(true);
+                        for (int i = 0; i < playerNum; i++)
+                        {
+                            if (characters[i].hasEquip()) selectButtons[i].SetActive(true);
+                        }
+                        selectButtons[playerId].SetActive(false);
+                        selectingAction = "devil";
+                    }
+                }
+                else
+                {
+                    drawBlackCardAfter();
+                }
+                break;
+            case 8:
+                /* 戦慄の闇儀式 */
+                activateOpenButtons(true);
+                ritual = true;
+                break;
             case 9:
                 /* 肉切り包丁 */
                 characters[playerId].addEquipment("knife");
@@ -892,6 +962,11 @@ public class SHManeger : MonoBehaviour {
                     buttonPanel.SetActive(true);
                     activateSelectButtons(true);
                     selectButtons[playerId].SetActive(false);
+                    /* 魔除けのお守り効果 */
+                    for (int i = 0; i < playerNum; i++)
+                    {
+                        if (characters[i].findEquipment("Amulet")) selectButtons[i].SetActive(false);
+                    }
                     selectingAction = "bat";
                     selecting = true;
                 }
@@ -955,13 +1030,72 @@ public class SHManeger : MonoBehaviour {
 
 	/* 希望と絶望の森 */
 	void hopeAndDespair(){
-        selectingAction = "hopeAndDespair";
-        activateSelectButtons(true);
+        if (mainPlayer)
+        {
+            selectingAction = "hopeAndDespair";
+            activateSelectButtons(true);
+        }
 	}
 
-	/* いにしえの祭壇 */
-	void altar(){
-		ChangeGameStatus(3);
+    void hopeAndDespairSelect()
+    {
+        hdButtons = new GameObject[2];
+        for (int i = 0; i < 2; i++)
+        {
+            hdButtons[i] = Instantiate(buttonPrefab,new Vector3(buttonX+i*xGap,buttonY+i*yGap,buttonZ+i*zGap),Quaternion.identity) as GameObject;
+            hdButtons[i].transform.SetParent(buttonPanel.GetComponent<Transform>());
+        }
+        hdButtons[0].transform.FindChild("Text").GetComponent<Text>().text = "2ダメージを与える";
+        hdButtons[0].GetComponent<Button>().onClick.AddListener(() => playerStatesM[tmppid].getDamage(2));
+        hdButtons[0].GetComponent<Button>().onClick.AddListener(() => activateHdButtons(false));
+        hdButtons[0].GetComponent<Button>().onClick.AddListener(() => ChangeGameStatus(3));
+        if (characters[tmppid].findEquipment("Brooch")) hdButtons[0].SetActive(false); //幸運のブローチの効果
+        hdButtons[1].transform.FindChild("Text").GetComponent<Text>().text = "1ダメージ回復する";
+        hdButtons[1].GetComponent<Button>().onClick.AddListener(() => playerStatesM[tmppid].getDamage(-1));
+        hdButtons[1].GetComponent<Button>().onClick.AddListener(() => activateHdButtons(false));
+        hdButtons[1].GetComponent<Button>().onClick.AddListener(() => ChangeGameStatus(3));
+        activateHdButtons(true);
+    }
+
+    void activateHdButtons(bool flag)
+    {
+        for (int i = 0; i < hdButtons.Length; i++)
+        {
+            hdButtons[i].SetActive(flag);
+        }
+        buttonPanel.SetActive(flag);
+    }
+
+    /* いにしえの祭壇 */
+    void altar()
+    {
+        if (mainPlayer)
+        {
+            bool canRob = false;
+            for (int i = 0; i < playerNum; i++)
+            {
+                if (i != playerId && characters[i].hasEquip())
+                {
+                    canRob = true;
+                    break;
+                }
+            }
+            if (canRob)
+            {
+                buttonPanel.SetActive(true);
+                for (int i = 0; i < playerNum; i++)
+                {
+                    if (characters[i].hasEquip()) selectButtons[i].SetActive(true);
+                }
+                selectButtons[playerId].SetActive(false);
+                selectingAction = "Alter";
+                currentAction = "Alter";
+            }
+            else
+            {
+                ChangeGameStatus(3);
+            }
+        }
 	}
 
 	/* ********************** */
@@ -1075,7 +1209,6 @@ public class SHManeger : MonoBehaviour {
                 }
             }
         }
-        machineGun = false;
         if (revengeOccur)
         {
             revengeReady(attackTarget, playerId);
@@ -1126,7 +1259,6 @@ public class SHManeger : MonoBehaviour {
     }
     public void startMachineGun()
     {
-        machineGun = true;
         diceAction = "MachineGun";
         dicesActivate(true);
     }
@@ -1166,15 +1298,8 @@ public class SHManeger : MonoBehaviour {
                 ChangeGameStatus(0);
                 break;
             case "hopeAndDespair":
-                if (id == playerId)
-                {
-                    playerStatesM[id].getDamage(-1);
-                }
-                else
-                {
-                    if (!characters[id].findEquipment("Brooch")) playerStatesM[id].getDamage(2);
-                }
-                ChangeGameStatus(3);
+                tmppid = id;
+                hopeAndDespairSelect();
                 break;
             case "Aid":
                 playerStatesM[id].moveScore(7);
@@ -1187,7 +1312,15 @@ public class SHManeger : MonoBehaviour {
                 break;
             case "banana":
                 tmppid = id;
-                equipHandoffSelect();
+                equipHandoffSelect(true);
+                break;
+            case "devil":
+                tmppid = id;
+                equipHandoffSelect(false);
+                break;
+            case "Alter":
+                tmppid = id;
+                equipHandoffSelect(false);
                 break;
 		}
         selectingAction = "";
@@ -1229,7 +1362,7 @@ public class SHManeger : MonoBehaviour {
             }
             else
             {
-                if (i != playerId && playersPositions[i] / 2 != playersPositions[playerId] / 2 && !playerStatesM[i].dead)
+                if (i != playerId && playersPositions[i] / 2 != playersPositions[playerId] / 2 && !playerStatesM[i].dead && playersPositions[i] != -2)
                 {
                     playerExists[i] = true;
                 }
@@ -1282,7 +1415,7 @@ public class SHManeger : MonoBehaviour {
                 {
                     if (area >= 0)
                     {
-                        if (playersPositions[i] == stages[area])
+                        if (playersPositions[i] == stages[area] && !characters[i].findEquipment("Amulet")) //魔除けのお守り効果
                         {
                             playerStatesM[i].getDamage(3);
                         }
@@ -1431,6 +1564,11 @@ public class SHManeger : MonoBehaviour {
     public void revealIdentity()
     {
         characters[playerId].reveal = true;
+        if (ritual)
+        {
+            if (characters[playerId].isShadow()) playerStatesM[playerId].moveScore(0);
+            ritual = false;
+        }
         if (characters[playerId].name == CharacterState.CharacterName.G) //Georgeの特殊効果
         {
             activateSelectButtons(true);
@@ -1500,7 +1638,7 @@ public class SHManeger : MonoBehaviour {
     }
 
     /* 勝敗判定処理 */
-    void checkWinner()
+    bool checkWinner()
     {
         for(int i = 0;i<playerStatesM.Length;i++)
         {
@@ -1509,7 +1647,7 @@ public class SHManeger : MonoBehaviour {
                 playerWin[i] = true;
                 for(int j = 0;j<playerStatesM.Length;j++)
                 {
-                    if(characters[i].isShadow() && !playerStatesM[i].dead) playerWin[i] = false;
+                    if(characters[j].isShadow() && !playerStatesM[j].dead) playerWin[i] = false;
                 }
             }
             else if(characters[i].isShadow()) //シャドウの勝利条件確認
@@ -1517,23 +1655,33 @@ public class SHManeger : MonoBehaviour {
                 playerWin[i] = true;
                 for(int j = 0;j<playerStatesM.Length;j++)
                 {
-                    if(characters[i].isHunter() && !playerStatesM[i].dead) playerWin[i] = false;
+                    if(characters[j].isHunter() && !playerStatesM[j].dead) playerWin[i] = false;
                 }
             }
             else //キャサリンの勝利条件確認(ニュートラル追加の際は要変更)
             {
-                if(playerStatesM[i].dead){
+                if (playerStatesM[i].dead)
+                {
                     playerWin[i] = true;
-                    for(int j = 0;j<playerStatesM.Length;j++)
+                    for (int j = 0; j < playerStatesM.Length; j++)
                     {
-                        if(j != i && playerStatesM[i].dead) playerWin[i] = false;
+                        if (j != i && playerStatesM[j].dead) playerWin[i] = false;
                     }
+                }
+                else
+                {
+                    int count = 0;
+                    for (int j = 0; j < playerStatesM.Length; j++)
+                    {
+                        if (j != i && !playerStatesM[j].dead) count++;
+                    }
+                    if (count == 1) playerWin[i] = true;
                 }
             }
         }
         bool checker = false;
         for(int i = 0;i<playerWin.Length;i++) if(playerWin[i]) checker = true;
-        if (checker) ChangeGameStatus(5);
+        return checker;
     }
 
    
