@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System;
 public class SHManeger : MonoBehaviour {
 
 	public int gameStatus;
@@ -50,6 +51,18 @@ public class SHManeger : MonoBehaviour {
 
     string currentAction = "";
 
+    /* AI用変数 */
+    /* 各種予測値 */
+    double[,] predictH = new double[playerNum,playerNum];
+    double[,] predictN = new double[playerNum, playerNum];
+    double[,] predictS = new double[playerNum, playerNum];
+    int[,] playerData = new int[playerNum, playerNum];
+    const int neutralData = 0;
+    const int hunterData = 1;
+    const int shadowData = 2;
+    int turn = 0; //ターン数を記録
+    int mainPlayerId;
+
 //<<<<<<< HEAD
 	string selectingAction = "",diceAction = "";
 //=======
@@ -65,8 +78,11 @@ public class SHManeger : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		setStage ();
-
+        setPredict();
 		playerId = 0;
+        mainPlayerId = UnityEngine.Random.Range(0, playerNum - 1);
+
+        Debug.Log("main player id = " + mainPlayerId);
 
 		for (int i = 0; i<playersPositions.Length; i++) {
 			playersPositions[i] = -2;
@@ -74,6 +90,8 @@ public class SHManeger : MonoBehaviour {
 
 		ChangeGameStatus (-1);
 	}
+
+
 
     /*                                */
     /* 開始時のステージ初期化ここから */
@@ -301,7 +319,7 @@ public class SHManeger : MonoBehaviour {
 		characters = character.GetComponentsInChildren<CharacterState> ();
 
 		for (int i = 0; i<characters.Length; i++) {
-			int randomIndex = Random.Range (0,characters.Length);
+			int randomIndex = UnityEngine.Random.Range (0,characters.Length);
 			CharacterState temp = characters[i];
 			characters[i] = characters[randomIndex];
 			characters[randomIndex] = temp;
@@ -313,16 +331,67 @@ public class SHManeger : MonoBehaviour {
         dicesActivate(false);
 	}
 
+    /* 予測値初期化 */
+    void setPredict()
+    {
+        for (int i = 0; i < playerNum; i++)
+        {
+            if (characters[i].isHunter())
+            {
+                playerData[i, i] = hunterData;
+                for (int j = 0; j < playerNum; j++)
+                {
+                    if (j == i) continue;
+                    playerData[i, j] = -1;
+                    predictH[i, j] = 1.0;
+                    predictN[i, j] = 1.0;
+                    predictS[i, j] = 1.0;
+                }
+            }
+            else if (characters[i].isShadow())
+            {
+                playerData[i, i] = shadowData;
+                for (int j = 0; j < playerNum; j++)
+                {
+                    if (j == i) continue;
+                    playerData[i, j] = -1;
+                    predictH[i, j] = 1.0;
+                    predictN[i, j] = 1.0;
+                    predictS[i, j] = 1.0;
+                }
+            }
+            else
+            {
+                playerData[i, i] = neutralData;
+                for (int j = 0; j < playerNum; j++)
+                {
+                    if (j == i) continue;
+                    playerData[i, j] = -1;
+                    predictH[i, j] = 1.0;
+                    predictN[i, j] = 1.0;
+                    predictS[i, j] = 1.0;
+                }
+            }
 
+        }
+    }
 
-	/* 配列のシャッフル(補助関数) */
-	void randomize(int[] array){
+    void deletePredicts(int playerId, int enemyId)
+    {
+        predictH[playerId, enemyId] = 0;
+        predictN[playerId, enemyId] = 0;
+        predictS[playerId, enemyId] = 0;
+    }
+
+    /* 配列のシャッフル(補助関数) */
+    void randomize(int[] array)
+    {
 		for (int i = 0; i<array.Length; i++) {
 			array[i] = i;
 		}
 		for (int i = 0; i<array.Length; i++) {
 			int temp = array[i];
-			int randomIndex = Random.Range (0,array.Length);
+			int randomIndex = UnityEngine.Random.Range (0,array.Length);
 			array[i] = array[randomIndex];
 			array[randomIndex] = temp;
 		}
@@ -339,22 +408,51 @@ public class SHManeger : MonoBehaviour {
     bool compass;
     
     public void ChangeGameStatus(int status){
-        Debug.Log("ChangeGameStatus:" + status + " playerId:" + playerId + "equip:" + characters[playerId].hasEquip());
+        if (playerId == mainPlayerId) mainPlayer = true;
+        else mainPlayer = false;
+        
+        Debug.Log("ChangeGameStatus:" + status + " playerId:" + playerId + "mainPlayer:" + mainPlayer + "(" + DateTime.Now + ")");
 		gameStatus = status;
 		switch (status) {
             case -1:
+                Debug.Log("Debug predicts");
+                string preH = "",preN="",preS = "";
+                for (int i = 0; i < playerNum; i++)
+                {
+                    preH += " " + predictH[playerId, i];
+                    preN += " " + predictN[playerId, i];
+                    preS += " " + predictS[playerId, i];
+                }
+                Debug.Log("preH(" + playerId + "):" + preH);
+                Debug.Log("preN(" + playerId + "):" + preN);
+                Debug.Log("preS(" + playerId + "):" + preS);
                 if (playerStatesM[playerId].dead)
                 {
                     ChangeGameStatus(4);
                 }
                 if (!characters[playerId].reveal)
                 {
-                    activateOpenButtons(true);
+                    if (mainPlayer)
+                    {
+                        activateOpenButtons(true);
+                    }
+                    else
+                    {
+                        if (revealDecision())
+                        {
+                            revealIdentity();
+                        }
+                        else
+                        {
+                            ChangeGameStatus(0);
+                        }
+                    }
                 }
                 else
                 {
                     ChangeGameStatus(0);
                 }
+                turn++;
                 break;
 		    case 0:
                 /* キャサリンの特殊能力 */
@@ -369,15 +467,8 @@ public class SHManeger : MonoBehaviour {
                 StartCoroutine(TransCamera(1.0f));
                 compass = characters[playerId].findEquipment("Compass");
 
-                if (!mainPlayer)
-                {
-				    d4Value = Random.Range(1,4);
-				    d6Value = Random.Range(1,6);
-				    ChangeGameStatus(2);
-			    }else{
-				    /* ダイスのアクティブ化 */
-				    dicesActivate (true);
-			    }
+                /* ダイスのアクティブ化 */
+                dicesActivate(true);
 			    break;
 		    case 1:
 			    /* ダイスの値取得 */
@@ -406,26 +497,27 @@ public class SHManeger : MonoBehaviour {
 			    checkPlayerExist(); //攻撃範囲のプレイヤー存在確認
                 if (!mainPlayer)
                 {
-				    int existCount = 0;
-				    for(int i = 0;i < playerExists.Length;i++){
-					    if(playerExists[i]) existCount++;
-				    }
-				    int attackSelect = Random.Range(0,existCount);
-				    if(attackSelect == 0){
-					    ChangeGameStatus(4);
-				    }else{
-					    for(int i = 0;i < playerExists.Length;i++){
-						    if(playerExists[i]) attackSelect--;
-						    if(attackSelect == 0){
-							    attackTarget = i;
-							    d4Value = Random.Range(1,4);
-							    d6Value = Random.Range(1,6);
-							    attackEnemy();
-							    break;
-						    }
-					    }
-				    }
-			    }else{
+                    if (characters[playerId].findEquipment("MachineGun"))
+                    {
+                        Debug.Log("Machine Gun!");
+                        diceAction = "MachineGun";
+                        bool attackPossibility = false;
+                        attackTargetList = new List<int>();
+                        for (int i = 0; i < playerExists.Length; i++)
+                        {
+                            if (playerExists[i])
+                            {
+                                attackTargetList.Add(i);
+                                attackPossibility = true;
+                            }
+                        }
+                        if (attackPossibility) dicesActivate(true);
+                        else ChangeGameStatus(4);
+                    }
+                    else autoAttackSelect(masamune);
+                }
+                else
+                {
                     if (characters[playerId].findEquipment("MachineGun")) machineGunReady();
                     else setAttackButtons(masamune);
                 }
@@ -479,11 +571,10 @@ public class SHManeger : MonoBehaviour {
 			break;
 		case 7:
 			if(!mainPlayer){
-				moveStage(Random.Range(0,5));
+				moveStage(UnityEngine.Random.Range(0,5));
 			}else{
-				buttonPanel.SetActive(true);
-				stageButtons.SetActive(true);
-			}
+                activateStageButtons(true);
+            }
 			break;
 		case 8:
 			moveStage (3);
@@ -496,15 +587,20 @@ public class SHManeger : MonoBehaviour {
 			break;
 		default:
 			if(!mainPlayer){
-				moveStage(Random.Range(0,5));
+				moveStage(UnityEngine.Random.Range(0,5));
 			}else{
-				buttonPanel.SetActive(true);
-				stageButtons.SetActive(true);
+                activateStageButtons(true);
 			}
 			break;
 		}
 
 	}
+    /* ステージボタン */
+    public void activateStageButtons(bool flag)
+    {
+        buttonPanel.SetActive(flag);
+        stageButtons.SetActive(flag);
+    }
 
 	/* ステージ移動 */
 	public void moveStage(int stageIndex){
@@ -553,17 +649,137 @@ public class SHManeger : MonoBehaviour {
 
 		greens [greenCards [greenCount]].SetActive (true);
 		/* オババカードを送る相手を選択*/
-		buttonPanel.SetActive(true);
-		activateSelectButtons(true);
-		selectButtons[playerId].SetActive(false);
-		selectingAction = "obaba";
-		selecting = true;
+        if (mainPlayer)
+        {
+            activateSelectButtons(true);
+            selectButtons[playerId].SetActive(false);
+            selectingAction = "obaba";
+            selecting = true;
+        }
+        else
+        {
+            greenCardAction(makeObabaTarget());
+        }
 	}
 
 	public void greenCardAction(int pid){
         tmppid = pid;
         currentAction = "Green";
-		/* オババカードの各効果 */
+        /* オババ効果を予測値に追加 */
+        switch (greenCards[greenCount] + 1)
+        {
+            case 1:
+            case 14: //NかHなら装備を渡すor1ダメージ
+                if (characters[pid].isHunter() || characters[pid].isNeutral())
+                {
+                    predictN[playerId, pid] *= 1.5;
+                    predictH[playerId, pid] *= 1.5;
+                    predictS[playerId, pid] = 0;
+                }
+                else
+                {
+                    playerData[playerId, pid] = shadowData;
+                    deletePredicts(playerId,pid);
+                }
+                break;
+            case 2:
+            case 3: //Hなら
+            case 9: 
+                if (characters[pid].isHunter())
+                {
+                    playerData[playerId, pid] = hunterData;
+                }
+                else
+                {
+                    predictH[playerId, pid] = 0;
+                    predictN[playerId, pid] *= 1.5;
+                    predictS[playerId, pid] *= 1.5;
+                }
+                break;
+            case 4: //HP>=12なら2ダメージ
+                if (characters[pid].isOver(12))
+                {
+                    predictN[playerId, pid] = 0;
+                }
+                else
+                {
+                    playerData[playerId, pid] = neutralData;
+                    deletePredicts(playerId, pid);
+                }
+                break;
+            case 5:
+            case 7: //HかSなら装備を渡すor1ダメージ
+                if (characters[pid].isHunter() || characters[pid].isShadow())
+                {
+                    predictH[playerId, pid] *= 1.5;
+                    predictS[playerId, pid] *= 1.5;
+                    predictN[playerId, pid] = 0;
+                }
+                else
+                {
+                    playerData[playerId, pid] = neutralData;
+                    deletePredicts(playerId, pid);
+                }
+                break;
+            case 6: //Sなら
+            case 13:
+            case 16:
+                if (characters[pid].isShadow())
+                {
+                    playerData[playerId, pid] = shadowData;
+                    deletePredicts(playerId, pid);
+                }
+                else
+                {
+                    predictH[playerId, pid] *= 1.5;
+                    predictN[playerId, pid] *= 1.5;
+                }
+                break;
+            case 8:
+            case 12: //NかSなら装備を渡すor1ダメージ
+                if (characters[pid].isNeutral() || characters[pid].isShadow())
+                {
+                    predictN[playerId, pid] *= 1.5;
+                    predictS[playerId, pid] *= 1.5;
+                    predictH[playerId, pid] = 0;
+                }
+                else
+                {
+                    playerData[playerId, pid] = hunterData;
+                    deletePredicts(playerId, pid);
+                }
+                break;
+            case 10: //Nなら1回復(それ以外なら1ダメージ)
+                if (characters[pid].isNeutral())
+                {
+                    playerData[playerId, pid] = neutralData;
+                    deletePredicts(playerId, pid);
+                }
+                else
+                {
+                    predictH[playerId, pid] *= 1.5;
+                    predictS[playerId, pid] *= 1.5;
+                    predictN[playerId, pid] = 0;
+                }
+                break;
+            case 11: //HP<=11なら1ダメージ
+                if (characters[pid].isUnder(11))
+                {
+                    playerData[playerId, pid] = neutralData;
+                    deletePredicts(playerId, pid);
+                }
+                else
+                {
+                    predictN[playerId, pid] = 0;
+                }
+
+                break;
+            case 15: //相手にカードを見せる(実装する？)
+                break;
+            default:
+                break;
+        }
+        /* オババカードの各効果 */
 		switch (greenCards [greenCount]+1) {
             case 1: case 14: //NかHなら装備を渡すor1ダメージ
                 if (characters[pid].isHunter()) activateChoiseButtons(true);
@@ -621,6 +837,31 @@ public class SHManeger : MonoBehaviour {
 		}
 	}
 
+    int makeObabaTarget()
+    {
+        int obabaTarget = -1;
+        double minPredict = double.MaxValue;
+        for (int i = 0; i < playerNum; i++)
+        {
+            if (i == playerId) continue;
+            double sum_m, sum_v;
+            sum_m = predictH[playerId,i] + predictN[playerId,i]+predictS[playerId,i];
+            sum_v = predictH[playerId,i]*predictH[playerId,i] + predictN[playerId,i]*predictN[playerId,i]+predictS[playerId,i]*predictS[playerId,i];
+            double variance = (sum_v / 3.0) - (sum_m * sum_m / 9.0);
+            if (variance > 0 && variance < minPredict)
+            {
+                obabaTarget = i;
+            }
+        }
+        if (obabaTarget == -1)
+        {
+            int randomTarget = UnityEngine.Random.Range(0, playerNum - 2);
+            if (randomTarget >= playerId) randomTarget++;
+            obabaTarget = randomTarget;
+        }
+        return obabaTarget;
+    }
+
     /* オババ終了処理 */
     public void greenCardAfter()
     {
@@ -648,19 +889,27 @@ public class SHManeger : MonoBehaviour {
         /* ボタンのactivate */
     public void activateChoiseButtons(bool flag)
     {
-        buttonPanel.SetActive(flag);
-        choiseButtons.SetActive(flag);
-        Debug.Log("Choise Button Array Length:" + choiseButtonArray.Length + " flag:" + flag);
-        if (flag)
+        if (tmppid == mainPlayerId)
         {
-            for (int i = 0; i < choiseButtonArray.Length; i++)
+            buttonPanel.SetActive(flag);
+            choiseButtons.SetActive(flag);
+            Debug.Log("Choise Button Array Length:" + choiseButtonArray.Length + " flag:" + flag);
+            if (flag)
             {
-                Debug.Log("Text:" + choiseButtonArray[i].transform.FindChild("Text").GetComponent<Text>().text + " not hasEquip" + !characters[tmppid].hasEquip() + " equipCount:" + characters[tmppid].getEquipList().Count);
-                if (choiseButtonArray[i].transform.FindChild("Text").GetComponent<Text>().text == "装備を渡す")
+                for (int i = 0; i < choiseButtonArray.Length; i++)
                 {
-                    choiseButtonArray[i].SetActive(characters[tmppid].hasEquip());
+                    Debug.Log("Text:" + choiseButtonArray[i].transform.FindChild("Text").GetComponent<Text>().text + " not hasEquip" + !characters[tmppid].hasEquip() + " equipCount:" + characters[tmppid].getEquipList().Count);
+                    if (choiseButtonArray[i].transform.FindChild("Text").GetComponent<Text>().text == "装備を渡す")
+                    {
+                        choiseButtonArray[i].SetActive(characters[tmppid].hasEquip());
+                    }
                 }
             }
+        }
+        else
+        {
+            /* ダメージを受ける動作に限定 */
+            getDamage();
         }
     }
 
@@ -671,19 +920,28 @@ public class SHManeger : MonoBehaviour {
         if (fromPlayer) fromId = playerId;
         else fromId = tmppid;
         choiseButtons.SetActive(false);
-        buttonPanel.SetActive(true);
-        equipButtons = new GameObject[characters[fromId].getEquipList().Count];
-        int count = 0;
-        foreach (string equip in characters[fromId].getEquipList())
+        if (fromId == mainPlayerId)
         {
-            equipButtons[count] = Instantiate(buttonPrefab, new Vector3(buttonX + count * xGap, buttonY + count * yGap + buttonZ + count * zGap), Quaternion.identity) as GameObject;
-            equipButtons[count].transform.SetParent(buttonPanel.GetComponent<Transform>());
-            equipButtons[count].GetComponent<Button>().onClick.AddListener(() => handoffEquip(equip,fromPlayer));
-            equipButtons[count].GetComponent<Button>().onClick.AddListener(() => activateEquipButtons(false));
-            equipButtons[count].transform.FindChild("Text").GetComponent<Text>().text = equip;
-            count++;
+            buttonPanel.SetActive(true);
+            equipButtons = new GameObject[characters[fromId].getEquipList().Count];
+            int count = 0;
+            foreach (string equip in characters[fromId].getEquipList())
+            {
+                equipButtons[count] = Instantiate(buttonPrefab, new Vector3(buttonX + count * xGap, buttonY + count * yGap + buttonZ + count * zGap), Quaternion.identity) as GameObject;
+                equipButtons[count].transform.SetParent(buttonPanel.GetComponent<Transform>());
+                equipButtons[count].GetComponent<Button>().onClick.AddListener(() => handoffEquip(equip, fromPlayer));
+                equipButtons[count].GetComponent<Button>().onClick.AddListener(() => activateEquipButtons(false));
+                equipButtons[count].transform.FindChild("Text").GetComponent<Text>().text = equip;
+                count++;
+            }
+            activateEquipButtons(true);
         }
-        activateEquipButtons(true);
+        else
+        {
+            List<string> equipList = characters[fromId].getEquipList();
+            int equipLength = equipList.Count;
+            handoffEquip(equipList[UnityEngine.Random.Range(0, equipLength - 1)],fromPlayer);
+        }
     }
     public void activateEquipButtons(bool flag)
     {
@@ -725,7 +983,6 @@ public class SHManeger : MonoBehaviour {
         /* ダメージを受ける */
         public void getDamage()
         {
-            choiseButtons.SetActive(false);
             playerStatesM[tmppid].getDamage(1);
             greenCardAfter();
         }
@@ -761,13 +1018,16 @@ public class SHManeger : MonoBehaviour {
                 break;
             case 5:
                 /* 恩恵 */
-                if(mainPlayer)
+                selectingAction = "benefit";
+                if (mainPlayer)
                 {
-                    buttonPanel.SetActive(true);
                     activateSelectButtons(true);
                     selectButtons[playerId].SetActive(false);
-                    selectingAction = "benefit";
                     selecting = true;
+                }
+                else
+                {
+                    selectCharacter(makeTarget(true));
                 }
                 break;
             case 6:
@@ -810,7 +1070,14 @@ public class SHManeger : MonoBehaviour {
             case 12:
                 /* 応急手当 */
                 selectingAction = "Aid";
-                activateSelectButtons(true);
+                if (mainPlayer)
+                {
+                    activateSelectButtons(true);
+                }
+                else
+                {
+                    selectCharacter(makeTarget(true));
+                }
                 break;
             case 13:
                 /* 神秘のブローチ */
@@ -855,7 +1122,7 @@ public class SHManeger : MonoBehaviour {
         Debug.Log("Draw Black Card No." + (blackCards[blackCount] + 1));
 
 		/* 黒カードの各効果 */
-		switch(blackCards[blackCount]+1)
+        switch (blackCards[blackCount] + 1)
         {
             case 1:
                 /* 妖刀マサムネ */
@@ -864,9 +1131,9 @@ public class SHManeger : MonoBehaviour {
                 break;
             case 2:
                 /* 血に飢えた大蜘蛛 */
+                selectingAction = "bigspider";
                 if (mainPlayer)
                 {
-                    buttonPanel.SetActive(true);
                     activateSelectButtons(true);
                     selectButtons[playerId].SetActive(false);
                     /* 魔除けのお守り効果 */
@@ -874,12 +1141,11 @@ public class SHManeger : MonoBehaviour {
                     {
                         if (characters[i].findEquipment("Amulet")) selectButtons[i].SetActive(false);
                     }
-                    selectingAction = "bigspider";
                     selecting = true;
                 }
                 else
                 {
-                    drawBlackCardAfter();
+                    selectCharacter(makeTarget(false));
                 }
                 break;
             case 3:
@@ -899,16 +1165,19 @@ public class SHManeger : MonoBehaviour {
                 break;
             case 6:
                 /* バナナの皮 */
+                selectingAction = "banana";
                 if (characters[playerId].getEquipList().Count == 0) playerStatesM[playerId].getDamage(1);
                 else
                 {
                     if (mainPlayer)
                     {
-                        buttonPanel.SetActive(true);
                         activateSelectButtons(true);
                         selectButtons[playerId].SetActive(false);
-                        selectingAction = "banana";
                         selecting = true;
+                    }
+                    else
+                    {
+                        selectCharacter(makeTarget(false));
                     }
                 }
                 drawBlackCardAfter();
@@ -957,9 +1226,9 @@ public class SHManeger : MonoBehaviour {
             case 12:
             case 14:
                 /* 吸血コウモリ */
+                selectingAction = "bat";
                 if (mainPlayer)
                 {
-                    buttonPanel.SetActive(true);
                     activateSelectButtons(true);
                     selectButtons[playerId].SetActive(false);
                     /* 魔除けのお守り効果 */
@@ -967,12 +1236,11 @@ public class SHManeger : MonoBehaviour {
                     {
                         if (characters[i].findEquipment("Amulet")) selectButtons[i].SetActive(false);
                     }
-                    selectingAction = "bat";
                     selecting = true;
                 }
                 else
                 {
-                    drawBlackCardAfter();
+                    selectCharacter(makeTarget(false));
                 }
                 break;
             case 13:
@@ -987,8 +1255,15 @@ public class SHManeger : MonoBehaviour {
                 break;
             case 16:
                 selectingAction = "doll";
-                activateSelectButtons(true);
-                selectButtons[playerId].SetActive(false);
+                if (mainPlayer)
+                {
+                    activateSelectButtons(true);
+                    selectButtons[playerId].SetActive(false);
+                }
+                else
+                {
+                    selectCharacter(makeTarget(false));
+                }
                 break;
             default:
                 drawBlackCardAfter();
@@ -1003,7 +1278,7 @@ public class SHManeger : MonoBehaviour {
 			randomize (blackCards);
 			blackCount = 0;
 		}
-		Debug.Log ("finish dbc");
+		Debug.Log ("draw black card after");
 		ChangeGameStatus(3);
 	}
 
@@ -1011,7 +1286,7 @@ public class SHManeger : MonoBehaviour {
 	/* 時空の扉 */
 	void drawFreeCard(){
 		if (!mainPlayer) {
-			switch(Random.Range (0,2)){
+			switch(UnityEngine.Random.Range (0,2)){
 			case 0:
 				drawBlackCard();
 				break;
@@ -1023,38 +1298,55 @@ public class SHManeger : MonoBehaviour {
 				break;
 			}
 		} else {
-			buttonPanel.SetActive (true);
-			drawButtons.SetActive (true);
+            activateDrawButtons(true);
 		}
 	}
 
+    public void activateDrawButtons(bool flag)
+    {
+        buttonPanel.SetActive(flag);
+        drawButtons.SetActive(flag);
+    }
+
 	/* 希望と絶望の森 */
 	void hopeAndDespair(){
+        selectingAction = "hopeAndDespair";
         if (mainPlayer)
         {
-            selectingAction = "hopeAndDespair";
             activateSelectButtons(true);
+        }
+        else
+        {
+            selectCharacter(makeTarget(false));
         }
 	}
 
     void hopeAndDespairSelect()
     {
-        hdButtons = new GameObject[2];
-        for (int i = 0; i < 2; i++)
+        if (mainPlayer)
         {
-            hdButtons[i] = Instantiate(buttonPrefab,new Vector3(buttonX+i*xGap,buttonY+i*yGap,buttonZ+i*zGap),Quaternion.identity) as GameObject;
-            hdButtons[i].transform.SetParent(buttonPanel.GetComponent<Transform>());
+            hdButtons = new GameObject[2];
+            for (int i = 0; i < 2; i++)
+            {
+                hdButtons[i] = Instantiate(buttonPrefab, new Vector3(buttonX + i * xGap, buttonY + i * yGap, buttonZ + i * zGap), Quaternion.identity) as GameObject;
+                hdButtons[i].transform.SetParent(buttonPanel.GetComponent<Transform>());
+            }
+            hdButtons[0].transform.FindChild("Text").GetComponent<Text>().text = "2ダメージを与える";
+            hdButtons[0].GetComponent<Button>().onClick.AddListener(() => playerStatesM[tmppid].getDamage(2));
+            hdButtons[0].GetComponent<Button>().onClick.AddListener(() => activateHdButtons(false));
+            hdButtons[0].GetComponent<Button>().onClick.AddListener(() => ChangeGameStatus(3));
+            if (characters[tmppid].findEquipment("Brooch")) hdButtons[0].SetActive(false); //幸運のブローチの効果
+            hdButtons[1].transform.FindChild("Text").GetComponent<Text>().text = "1ダメージ回復する";
+            hdButtons[1].GetComponent<Button>().onClick.AddListener(() => playerStatesM[tmppid].getDamage(-1));
+            hdButtons[1].GetComponent<Button>().onClick.AddListener(() => activateHdButtons(false));
+            hdButtons[1].GetComponent<Button>().onClick.AddListener(() => ChangeGameStatus(3));
+            activateHdButtons(true);
         }
-        hdButtons[0].transform.FindChild("Text").GetComponent<Text>().text = "2ダメージを与える";
-        hdButtons[0].GetComponent<Button>().onClick.AddListener(() => playerStatesM[tmppid].getDamage(2));
-        hdButtons[0].GetComponent<Button>().onClick.AddListener(() => activateHdButtons(false));
-        hdButtons[0].GetComponent<Button>().onClick.AddListener(() => ChangeGameStatus(3));
-        if (characters[tmppid].findEquipment("Brooch")) hdButtons[0].SetActive(false); //幸運のブローチの効果
-        hdButtons[1].transform.FindChild("Text").GetComponent<Text>().text = "1ダメージ回復する";
-        hdButtons[1].GetComponent<Button>().onClick.AddListener(() => playerStatesM[tmppid].getDamage(-1));
-        hdButtons[1].GetComponent<Button>().onClick.AddListener(() => activateHdButtons(false));
-        hdButtons[1].GetComponent<Button>().onClick.AddListener(() => ChangeGameStatus(3));
-        activateHdButtons(true);
+        else
+        {
+            playerStatesM[tmppid].getDamage(2);
+            ChangeGameStatus(3);
+        }
     }
 
     void activateHdButtons(bool flag)
@@ -1069,34 +1361,39 @@ public class SHManeger : MonoBehaviour {
     /* いにしえの祭壇 */
     void altar()
     {
-        if (mainPlayer)
+        bool canRob = false;
+        List<int> robList = new List<int>();
+        for (int i = 0; i < playerNum; i++)
         {
-            bool canRob = false;
-            for (int i = 0; i < playerNum; i++)
+            if (i != playerId && characters[i].hasEquip())
             {
-                if (i != playerId && characters[i].hasEquip())
-                {
-                    canRob = true;
-                    break;
-                }
+                canRob = true;
+                robList.Add(i);
             }
-            if (canRob)
+        }
+        if (canRob)
+        {
+            selectingAction = "Alter";
+            currentAction = "Alter";
+            if (mainPlayer)
             {
                 buttonPanel.SetActive(true);
-                for (int i = 0; i < playerNum; i++)
+                for (int i = 0; i < robList.Count; i++)
                 {
-                    if (characters[i].hasEquip()) selectButtons[i].SetActive(true);
+                    if (characters[robList[i]].hasEquip()) selectButtons[i].SetActive(true);
                 }
                 selectButtons[playerId].SetActive(false);
-                selectingAction = "Alter";
-                currentAction = "Alter";
             }
             else
             {
-                ChangeGameStatus(3);
+                selectCharacter(robList[UnityEngine.Random.Range(0, robList.Count - 1)]);
             }
         }
-	}
+        else
+        {
+            ChangeGameStatus(3);
+        }
+    }
 
 	/* ********************** */
 	/* ********************** */
@@ -1111,6 +1408,7 @@ public class SHManeger : MonoBehaviour {
 
     public void attackEnemy()
     {
+        updatePredicate(playerId, attackTarget);
         int robeEffect = 0;
         if (attackTarget != angelId)
         {
@@ -1145,6 +1443,117 @@ public class SHManeger : MonoBehaviour {
         else
         {
             ChangeGameStatus(4);
+        }
+    }
+
+    void autoAttackSelect(bool masamune)
+    {
+        int existCount = 0;
+        for (int i = 0; i < playerExists.Length; i++)
+        {
+            if (playerExists[i]) existCount++;
+        }
+        if (existCount == 0) ChangeGameStatus(4);
+        else
+        {
+
+            if (characters[playerId].isHunter() || characters[playerId].isShadow())
+            {
+                int target;
+                if (characters[playerId].isHunter()) target = shadowData;
+                else target = hunterData;
+                int targetHP = int.MaxValue, targetRest = int.MaxValue;
+                bool findEnemy = false;
+                for (int i = 0; i < playerNum; i++)
+                {
+                    if (i == playerId) continue;
+                    if (!playerExists[i]) continue;
+                    if (playerData[playerId, i] == target)
+                    {
+                        findEnemy = true;
+                        int tmpHP = playerStatesM[i].getScore();
+                        int tmpRest = int.MaxValue;
+                        if (characters[playerId].reveal)
+                        {
+                            tmpRest = characters[i].maxHp - targetHP;
+                        }
+                        if (tmpRest < 3 && tmpRest < targetRest)
+                        {
+                            attackTarget = i;
+                            targetRest = tmpRest;
+                        }
+                        else
+                        {
+                            if (tmpHP < targetHP)
+                            {
+                                targetHP = tmpHP;
+                                attackTarget = i;
+                                targetRest = tmpRest;
+                            }
+                        }
+                    }
+                }
+                if (!findEnemy)
+                {
+                    double maxPredict = 1.0;
+                    if (masamune) maxPredict = double.MinValue;
+                    for (int i = 0; i < playerNum; i++)
+                    {
+                        if (i == playerId) continue;
+                        if (!playerExists[i]) continue;
+                        if (characters[playerId].isHunter() && predictS[playerId, i] > maxPredict)
+                        {
+                            attackTarget = i;
+                            maxPredict = predictS[playerId, i];
+                            findEnemy = true;
+                        }
+                        else if (characters[playerId].isShadow() && predictH[playerId, i] > maxPredict)
+                        {
+                            attackTarget = i;
+                            maxPredict = predictS[playerId, i];
+                            findEnemy = true;
+                        }
+
+                    }
+                }
+                if (findEnemy)
+                {
+                    StartCoroutine(diceRollAfterSeconds(5));
+                }
+                else
+                {
+                    ChangeGameStatus(4);
+                }
+            }
+        }
+    }
+
+    void updatePredicate(int attackId, int receiveId)
+    {
+        for (int i = 0; i < playerNum; i++)
+        {
+            if (i == attackId) continue;
+            if (playerData[i, attackId] >= 0)
+            {
+                if (playerData[i, attackId] == hunterData)
+                {
+                    if(predictS[i,receiveId] > 0) predictS[i, receiveId] += 0.5;
+                    predictH[i, receiveId] *= 0.8;
+                }
+                else if (playerData[i, attackId] == shadowData)
+                {
+                    if(predictH[i,receiveId] > 0) predictH[i, receiveId] += 0.5;
+                    predictS[i, receiveId] *= 0.8;
+                }
+
+            }
+            else
+            {
+                if (predictH[i, receiveId] > 0) predictH[i, receiveId] += 0.3 * predictS[i, attackId];
+                if (predictS[i, receiveId] > 0) predictS[i, receiveId] += 0.3 * predictH[i, attackId];
+                if (predictH[i, attackId] > 0) predictH[i, attackId] += 0.3 * predictS[i, receiveId];
+                if (predictS[i, attackId] > 0) predictS[i, attackId] += 0.3 * predictH[i, receiveId];
+            }
         }
     }
 
@@ -1239,16 +1648,18 @@ public class SHManeger : MonoBehaviour {
     }
 
 	public void activateAttackButtons(bool flag){
-		foreach(GameObject obj in attackButtons){
+        buttonPanel.SetActive(flag);
+        foreach (GameObject obj in attackButtons)
+        {
 			obj.SetActive(flag);
 		}
 	}
 	public void activateSelectButtons(bool flag){
+        buttonPanel.SetActive(flag);
         for (int i = 0; i < selectButtons.Length; i++)
         {
             if (!playerStatesM[i].dead) selectButtons[i].SetActive(flag);
         }
-        buttonPanel.SetActive(flag);
 	}
 
     public void activateMachineAttackButtons(bool flag)
@@ -1476,14 +1887,12 @@ public class SHManeger : MonoBehaviour {
                     else
                     {
                         compass_second = d6Value + d4Value;
-                        compassActivate(true);
+                        if (mainPlayer) compassActivate(true);
+                        else selectCompass(UnityEngine.Random.Range(1, 2));
                     }
                 }
                 else
                 {
-                    /* debug用にd4,d6を設定 */
-//                    d4Value = 2;
-//                    d6Value = 6;
                     ChangeGameStatus(2);
                 }
             }
@@ -1504,6 +1913,13 @@ public class SHManeger : MonoBehaviour {
 		Debug.Log ("finish waiting");
 	}
 
+    IEnumerator diceRollAfterSeconds(int sec)
+    {
+        yield return new WaitForSeconds(sec);
+        diceroll.SendMessage("diceRoll");
+        yield break;
+    }
+
 	IEnumerator waitingClick(){
 		while (true) {
 			if(Input.GetMouseButton(0)) break;
@@ -1512,22 +1928,42 @@ public class SHManeger : MonoBehaviour {
 	}
 	
 	void dicesActivate(bool flag){
-		d4.transform.position = new Vector3(5,20,-2);
-		d6.transform.position = new Vector3(-2,14,0);
-		d4.transform.rotation = Quaternion.Euler (Random.Range (0, 360), Random.Range (0, 360), Random.Range (0, 360));
-		d6.transform.rotation = Quaternion.Euler (Random.Range (0, 360), Random.Range (0, 360), Random.Range (0, 360));
-        if (!(selectingAction == "George" || selectingAction == "doll" ))
+        if (flag)
+        {
+            d4.transform.position = new Vector3(5, 20, -2);
+            d6.transform.position = new Vector3(-2, 14, 0);
+            d4.transform.rotation = Quaternion.Euler(UnityEngine.Random.Range(0, 360), UnityEngine.Random.Range(0, 360), UnityEngine.Random.Range(0, 360));
+            d6.transform.rotation = Quaternion.Euler(UnityEngine.Random.Range(0, 360), UnityEngine.Random.Range(0, 360), UnityEngine.Random.Range(0, 360));
+            if (!(selectingAction == "George" || selectingAction == "doll"))
+            {
+                d4.SetActive(flag);
+                d4.GetComponent<Rigidbody>().Sleep();
+            }
+            if (!(masamune || selectingAction == "benefit"))
+            {
+                d6.SetActive(flag);
+                d6.GetComponent<Rigidbody>().Sleep();
+            }
+            if (mainPlayer)
+            {
+                buttonPanel.SetActive(flag);
+                diceButton.SetActive(flag);
+            }
+            else
+            {
+                StartCoroutine(diceRollAfterSeconds(5));
+            }
+        }
+        else
         {
             d4.SetActive(flag);
-            d4.GetComponent<Rigidbody>().Sleep();
-        }
-        if (!(masamune || selectingAction == "benefit"))
-        {
             d6.SetActive(flag);
-            d6.GetComponent<Rigidbody>().Sleep();
+            if (mainPlayer)
+            {
+                buttonPanel.SetActive(flag);
+                diceButton.SetActive(flag);
+            }
         }
-        buttonPanel.SetActive(flag);
-		diceButton.SetActive(flag);
 	}
 
     void compassActivate(bool flag)
@@ -1559,11 +1995,25 @@ public class SHManeger : MonoBehaviour {
         buttonPanel.SetActive(flag);
         openButton1.SetActive(flag);
         openButton2.SetActive(flag);
+        if (ritual)
+        {
+            openButton2.GetComponent<Button>().onClick.RemoveListener(() => ChangeGameStatus(0));
+            openButton2.GetComponent<Button>().onClick.AddListener(() => drawBlackCardAfter());
+        }
     }
 
     public void revealIdentity()
     {
         characters[playerId].reveal = true;
+        for (int i = 0; i < playerNum; i++)
+        {
+            if (i == playerId) continue;
+            if (characters[playerId].isNeutral()) playerData[i, playerId] = neutralData;
+            if (characters[playerId].isHunter()) playerData[i, playerId] = hunterData;
+            if (characters[playerId].isShadow()) playerData[i, playerId] = shadowData;
+            deletePredicts(i, playerId);
+        }
+
         if (ritual)
         {
             if (characters[playerId].isShadow()) playerStatesM[playerId].moveScore(0);
@@ -1571,17 +2021,43 @@ public class SHManeger : MonoBehaviour {
         }
         if (characters[playerId].name == CharacterState.CharacterName.G) //Georgeの特殊効果
         {
-            activateSelectButtons(true);
-            selectButtons[playerId].SetActive(false);
             selectingAction = "George";
-            selecting = true;
+            if (mainPlayer)
+            {
+                activateSelectButtons(true);
+                selectButtons[playerId].SetActive(false);
+                selecting = true;
+            }
+            else
+            {
+                selectCharacter(makeTarget(false));
+            }
         }
         else if (characters[playerId].name == CharacterState.CharacterName.F) //Fukaの特殊能力
         {
-            activateSelectButtons(true);
-            selectButtons[playerId].SetActive(false);
             selectingAction = "Fuka";
-            selecting = true;
+            if (mainPlayer)
+            {
+                activateSelectButtons(true);
+                selectButtons[playerId].SetActive(false);
+                selecting = true;
+            }
+            else
+            {
+                bool found = false;
+                for (int i = 0; i < playerNum; i++)
+                {
+                    if(characters[i].isHunter() && i != playerId && playerStatesM[i].getScore() > 7) {
+                        selectCharacter(i);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    selectCharacter(makeTarget(false));
+                }
+            }
         }
         else if(characters[playerId].fullname == CharacterState.CharacterFullName.Wight) //Wightの特殊能力
         {
@@ -1590,13 +2066,31 @@ public class SHManeger : MonoBehaviour {
                 if (i == playerId) continue;
                 if (playerStatesM[i].dead) wightCounter++;
             }
-            dicesActivate(true);
-            ChangeGameStatus(0);
+            if (ritual)
+            {
+                drawBlackCardAfter();
+            }
+            else
+            {
+                if (mainPlayer)
+                {
+                    ChangeGameStatus(0);
+                }
+                else
+                {
+                }
+            }
         }
         else
         {
-            dicesActivate(true);
-            ChangeGameStatus(0);
+            if (ritual)
+            {
+                drawBlackCardAfter();
+            }
+            else
+            {
+                ChangeGameStatus(0);
+            }
         }
     }
 
@@ -1635,6 +2129,35 @@ public class SHManeger : MonoBehaviour {
             }
         }
         ChangeGameStatus(4);
+    }
+
+    bool revealDecision()
+    {
+        bool reveal = false;
+        int count = 0;
+        if (characters[playerId].fullname == CharacterState.CharacterFullName.Catherine)
+        {
+            for (int i = 0; i < playerNum; i++)
+            {
+                if (i == playerId) continue;
+                if (playerStatesM[i].dead) count++;
+            }
+            if (count > 0) reveal = true;
+        }
+        else
+        {
+
+            for (int i = 0; i < playerNum; i++)
+            {
+                if (characters[i].reveal) count++;
+            }
+            if (count >= playerNum - 1) reveal = true;
+            if (!reveal)
+            {
+                if (playerStatesM[playerId].getScore() >= characters[playerId].maxHp * 0.8) reveal = true;
+            }
+        }
+        return reveal;
     }
 
     /* 勝敗判定処理 */
@@ -1684,7 +2207,150 @@ public class SHManeger : MonoBehaviour {
         return checker;
     }
 
-   
+   /* ランダムターゲット選択 */
+    int makeTarget(bool merit)
+    {
+        int madeTarget = -1;
+        if (merit)
+        {
+            if (characters[playerId].isHunter() || characters[playerId].isShadow())
+            {
+                int target;
+                if (characters[playerId].isHunter()) target = hunterData;
+                else target = shadowData;
+                int targetHP = int.MaxValue, targetRest = int.MaxValue;
+                bool findEnemy = false;
+                for (int i = 0; i < playerNum; i++)
+                {
+                    if (i == playerId) continue;
+                    if (playerData[playerId, i] == target)
+                    {
+                        findEnemy = true;
+                        int tmpHP = playerStatesM[i].getScore();
+                        int tmpRest = int.MaxValue;
+                        if (characters[playerId].reveal)
+                        {
+                            tmpRest = characters[i].maxHp - targetHP;
+                        }
+                        if (tmpRest < 3 && tmpRest < targetRest)
+                        {
+                            madeTarget = i;
+                            targetRest = tmpRest;
+                        }
+                        else
+                        {
+                            if (tmpHP < targetHP)
+                            {
+                                targetHP = tmpHP;
+                                madeTarget = i;
+                                targetRest = tmpRest;
+                            }
+                        }
+                    }
+                }
+                if (!findEnemy)
+                {
+                    double maxPredict = 1.0;
+                    for (int i = 0; i < playerNum; i++)
+                    {
+                        if (i == playerId) continue;
+                        if (characters[playerId].isHunter() && predictH[playerId, i] > maxPredict)
+                        {
+                            madeTarget = i;
+                            maxPredict = predictS[playerId, i];
+                            findEnemy = true;
+                        }
+                        else if (characters[playerId].isShadow() && predictS[playerId, i] > maxPredict)
+                        {
+                            madeTarget = i;
+                            maxPredict = predictS[playerId, i];
+                            findEnemy = true;
+                        }
+                    }
+                }
+                if (!findEnemy)
+                {
+                    madeTarget = UnityEngine.Random.Range(0, playerNum - 2);
+                    if (madeTarget >= playerId) madeTarget++;
+                }
+            }
+            else
+            {
+                madeTarget = UnityEngine.Random.Range(0, playerNum - 2);
+                if (madeTarget >= playerId) madeTarget++;
+            }
+        }
+        else
+        {
+            if (characters[playerId].isHunter() || characters[playerId].isShadow())
+            {
+                int target;
+                if (characters[playerId].isHunter()) target = shadowData;
+                else target = hunterData;
+                int targetHP = int.MaxValue, targetRest = int.MaxValue;
+                bool findEnemy = false;
+                for (int i = 0; i < playerNum; i++)
+                {
+                    if (i == playerId) continue;
+                    if (playerData[playerId, i] == target)
+                    {
+                        findEnemy = true;
+                        int tmpHP = playerStatesM[i].getScore();
+                        int tmpRest = int.MaxValue;
+                        if (characters[playerId].reveal)
+                        {
+                            tmpRest = characters[i].maxHp - targetHP;
+                        }
+                        if (tmpRest < 3 && tmpRest < targetRest)
+                        {
+                            madeTarget = i;
+                            targetRest = tmpRest;
+                        }
+                        else
+                        {
+                            if (tmpHP < targetHP)
+                            {
+                                targetHP = tmpHP;
+                                madeTarget = i;
+                                targetRest = tmpRest;
+                            }
+                        }
+                    }
+                }
+                if (!findEnemy)
+                {
+                    double maxPredict = 1.0;
+                    for (int i = 0; i < playerNum; i++)
+                    {
+                        if (i == playerId) continue;
+                        if (characters[playerId].isHunter() && predictS[playerId, i] > maxPredict)
+                        {
+                            madeTarget = i;
+                            maxPredict = predictS[playerId, i];
+                            findEnemy = true;
+                        }
+                        else if (characters[playerId].isShadow() && predictH[playerId, i] > maxPredict)
+                        {
+                            madeTarget = i;
+                            maxPredict = predictS[playerId, i];
+                            findEnemy = true;
+                        }
+                    }
+                }
+                if (!findEnemy)
+                {
+                    madeTarget = UnityEngine.Random.Range(0, playerNum - 2);
+                    if (madeTarget >= playerId) madeTarget++;
+                }
+            }
+            else
+            {
+                madeTarget = UnityEngine.Random.Range(0, playerNum - 2);
+                if (madeTarget >= playerId) madeTarget++;
+            }
+        }
+        return madeTarget;
+    }
 
     //ここから追加
     /*フェードイン・アウトの線画*/
