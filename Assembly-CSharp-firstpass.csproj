@@ -6,10 +6,10 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
-    <ProjectGuid>{5B9FF267-005F-A3BF-219E-FEAE2D8C894F}</ProjectGuid>
+    <ProjectGuid>{EB8AA23C-2655-E22B-2EBB-05697394EDB3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <AssemblyName>Assembly-CSharp</AssemblyName>
+    <AssemblyName>Assembly-CSharp-firstpass</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <BaseDirectory>Assets</BaseDirectory>
@@ -45,23 +45,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\Dice\Plugins\Dice.cs" />
-     <Compile Include="Assets\Dice\Plugins\Die.cs" />
-     <Compile Include="Assets\Dice\Scripts\Dice\Die_d10.cs" />
-     <Compile Include="Assets\Dice\Scripts\Dice\Die_d6.cs" />
-     <Compile Include="Assets\Dice\scenes\Demo\AppDemo.cs" />
-     <Compile Include="Assets\PlayerStateManager.cs" />
-     <Compile Include="Assets\Script\CardSlide.cs" />
-     <Compile Include="Assets\Script\CharacterState.cs" />
-     <Compile Include="Assets\Script\DiceRoll.cs" />
-     <Compile Include="Assets\Script\FadeManager.cs" />
-     <Compile Include="Assets\Script\HPCount.cs" />
-     <Compile Include="Assets\Script\HandCard.cs" />
-     <Compile Include="Assets\Script\MessageBox.cs" />
-     <Compile Include="Assets\Script\SHManeger.cs" />
-     <Compile Include="Assets\Script\SystemState.cs" />
-     <Compile Include="Assets\Script\ViewCard.cs" />
-     <Compile Include="Assets\buttonsController.cs" />
+     <Compile Include="Assets\Plugins\Pixelplacement\iTween\Sample\MoveSample.cs" />
+     <Compile Include="Assets\Plugins\Pixelplacement\iTween\Sample\RotateSample.cs" />
+     <Compile Include="Assets\Plugins\Pixelplacement\iTween\Sample\SampleInfo.cs" />
+     <Compile Include="Assets\Plugins\Pixelplacement\iTween\iTween.cs" />
      <None Include="Assets\Dice\-Read-Me-.txt" />
      <None Include="Assets\Plugins\Pixelplacement\iTween\ReadMe!\ReadMe!.txt" />
  <Reference Include="UnityEngine.UI">
@@ -70,10 +57,6 @@
  <Reference Include="UnityEngine.Networking">
  <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/Networking/UnityEngine.Networking.dll</HintPath>
  </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="Assembly-CSharp-firstpass.csproj">
-      <Project>{EB8AA23C-2655-E22B-2EBB-05697394EDB3}</Project>      <Name>Assembly-CSharp-firstpass</Name>    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -1046,17 +1046,11 @@ public class SHManeger : MonoBehaviour {
                 drawWhiteCardAfter();
                 break;
             case 9:
-                /* ロンギヌスの槍 */
-                /* 実装検討 */
-                characters[playerId].addEquipment("Longinus");
-                drawWhiteCardAfter();
-                break;
-            case 10:
                 /* 守護天使 */
                 angelId = playerId; //攻撃対象のIdがangelIdならノーダメ
                 drawWhiteCardAfter();
                 break;
-            case 11:
+            case 10:
                 /* 裁きの閃光 */
                 for (int i = 0; i < playerStatesM.Length; i++)
                 {
@@ -1067,7 +1061,7 @@ public class SHManeger : MonoBehaviour {
                 }
                 drawWhiteCardAfter();
                 break;
-            case 12:
+            case 11:
                 /* 応急手当 */
                 selectingAction = "Aid";
                 if (mainPlayer)
@@ -1079,19 +1073,14 @@ public class SHManeger : MonoBehaviour {
                     selectCharacter(makeTarget(true));
                 }
                 break;
-            case 13:
+            case 12:
                 /* 神秘のブローチ */
                 characters[playerId].addEquipment("Brooch");
                 drawWhiteCardAfter();
                 break;
-            case 14:
+            case 13:
                 /* 闇を祓う鏡 */
                 if (characters[playerId].fullname == CharacterState.CharacterFullName.Werewolf) revealIdentity();
-                drawWhiteCardAfter();
-                break;
-            case 15:
-                /* 光臨 */
-                //実装検討
                 drawWhiteCardAfter();
                 break;
         }
@@ -1448,15 +1437,16 @@ public class SHManeger : MonoBehaviour {
 
     void autoAttackSelect(bool masamune)
     {
+        Debug.Log("Auto attack select (masamune:" + masamune + ")");
         int existCount = 0;
         for (int i = 0; i < playerExists.Length; i++)
         {
             if (playerExists[i]) existCount++;
         }
+        Debug.Log("Exist count:" + existCount);
         if (existCount == 0) ChangeGameStatus(4);
         else
         {
-
             if (characters[playerId].isHunter() || characters[playerId].isShadow())
             {
                 int target;
@@ -1473,7 +1463,7 @@ public class SHManeger : MonoBehaviour {
                         findEnemy = true;
                         int tmpHP = playerStatesM[i].getScore();
                         int tmpRest = int.MaxValue;
-                        if (characters[playerId].reveal)
+                        if (characters[i].reveal)
                         {
                             tmpRest = characters[i].maxHp - targetHP;
                         }
@@ -1518,12 +1508,24 @@ public class SHManeger : MonoBehaviour {
                 }
                 if (findEnemy)
                 {
-                    StartCoroutine(diceRollAfterSeconds(5));
+                    dicesActivate(true);
                 }
-                else
+                else ChangeGameStatus(4);
+            }
+            else
+            {
+                if (characters[playerId].fullname == CharacterState.CharacterFullName.Catherine)
                 {
-                    ChangeGameStatus(4);
+                    int randomTarget = UnityEngine.Random.Range(0, playerNum + 2);
+                    if (randomTarget >= playerId) randomTarget++;
+                    if (randomTarget >= playerNum) ChangeGameStatus(4);
+                    else
+                    {
+                        attackTarget = randomTarget;
+                        dicesActivate(true);
+                    }
                 }
+                else ChangeGameStatus(4);
             }
         }
     }
