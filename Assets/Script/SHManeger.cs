@@ -464,7 +464,7 @@ public class SHManeger : MonoBehaviour {
                 /* 守護天使の効果切れ */
                     angelId = -1;
                 /*ダイスロール時のカメラに切り替え*/
-                StartCoroutine(TransCamera(1.0f));
+                StartCoroutine(TransCamera(2.0f));
                 compass = characters[playerId].findEquipment("Compass");
 
                 /* ダイスのアクティブ化 */
@@ -606,7 +606,8 @@ public class SHManeger : MonoBehaviour {
 	public void moveStage(int stageIndex){
         Debug.Log("stageIndex:" + stageIndex);
         stageButtons.SetActive(false);
-		monsters[playerId].transform.position = panelPositions[stages[stageIndex]].position;
+		//monsters[playerId].transform.position = panelPositions[stages[stageIndex]].position;
+        iTween.MoveTo(monsters[playerId], panelPositions[stages[stageIndex]].transform.position, 0.5f);
 		playersPositions [playerId] = stages [stageIndex];
 		switch (stageIndex) {
 		    case 0:
