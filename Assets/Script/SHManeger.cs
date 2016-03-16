@@ -11,6 +11,10 @@ public class SHManeger : MonoBehaviour {
 
     public GameObject fazeEffect;
 
+    public GameObject smokeEffect;
+
+    public GameObject catherine;
+
 	public GameObject d4,d6,diceButton,PlayerPanels,Monster,EffectPanels,Enemy,buttonPanel,character,buttonPrefab;
 
     public Camera mainCamera,subCamera;
@@ -1994,7 +1998,7 @@ public class SHManeger : MonoBehaviour {
 
     /* 正体公開 */
     public void activateOpenButtons(bool flag)
-    {
+    {   
         buttonPanel.SetActive(flag);
         openButton1.SetActive(flag);
         openButton2.SetActive(flag);
@@ -2008,6 +2012,18 @@ public class SHManeger : MonoBehaviour {
     public void revealIdentity()
     {
         characters[playerId].reveal = true;
+
+        if (playerId == mainPlayerId)
+        {
+            GameObject effect = Instantiate(smokeEffect, monsters[mainPlayerId].transform.position, monsters[mainPlayerId].transform.rotation) as GameObject;
+            Destroy(effect, 1.0f);
+
+            iTween.ScaleTo(monsters[mainPlayerId], iTween.Hash("scale", new Vector3(0,0,0), "time", 1.0f));
+            GameObject cath = Instantiate(catherine, monsters[mainPlayerId].transform.position, monsters[mainPlayerId].transform.rotation) as GameObject;
+            monsters[mainPlayerId] = cath;
+            iTween.ScaleTo(monsters[mainPlayerId], iTween.Hash("scale", new Vector3(50, 50, 50), "time", 1.0f));
+        }
+
         for (int i = 0; i < playerNum; i++)
         {
             if (i == playerId) continue;
@@ -2396,9 +2412,18 @@ public class SHManeger : MonoBehaviour {
 
         this.isFading = false;
 
-        GameObject faze = Instantiate(fazeEffect) as GameObject;
+        if (gameStatus == 0)
+        {
+            GameObject faze = Instantiate(fazeEffect) as GameObject;
 
-        Destroy(faze, 2.0f);
+            if (!mainPlayer)
+            {
+                faze.GetComponentInChildren<Image>().color = Color.green;
+                faze.GetComponentInChildren<Text>().text = "(CPU)";
+            }
+
+            Destroy(faze, 2.0f);
+        }
     }
 
     //カメラ切り替え
