@@ -1181,6 +1181,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   score: 0
   dead: 0
+  playerPos: {fileID: 352150606}
+  damageEffect: {fileID: 155348, guid: 758bda668a840e5479e0ee921895f280, type: 2}
 --- !u!1 &76298466
 GameObject:
   m_ObjectHideFlags: 0
@@ -3421,6 +3423,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   score: 0
   dead: 0
+  playerPos: {fileID: 954766491}
+  damageEffect: {fileID: 155348, guid: 758bda668a840e5479e0ee921895f280, type: 2}
 --- !u!1 &328119099
 GameObject:
   m_ObjectHideFlags: 0
@@ -7267,6 +7271,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   score: 0
   dead: 0
+  playerPos: {fileID: 23092931}
+  damageEffect: {fileID: 155348, guid: 758bda668a840e5479e0ee921895f280, type: 2}
 --- !u!23 &942458446
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11075,6 +11081,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   score: 0
   dead: 0
+  playerPos: {fileID: 1773197107}
+  damageEffect: {fileID: 155348, guid: 758bda668a840e5479e0ee921895f280, type: 2}
 --- !u!1 &1394039371
 GameObject:
   m_ObjectHideFlags: 0
@@ -13239,6 +13247,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   score: 0
   dead: 0
+  playerPos: {fileID: 1337507360}
+  damageEffect: {fileID: 155348, guid: 758bda668a840e5479e0ee921895f280, type: 2}
 --- !u!1 &1698857609
 GameObject:
   m_ObjectHideFlags: 0

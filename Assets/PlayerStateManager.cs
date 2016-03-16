@@ -5,6 +5,8 @@ public class PlayerStateManager : MonoBehaviour {
 
 	public int score;
     public bool dead = false;
+    public Transform playerPos; 
+    public GameObject damageEffect;
 	int maxHP = 0;
 	GameObject[] HP;
 	// Use this for initialization
@@ -53,6 +55,9 @@ public class PlayerStateManager : MonoBehaviour {
     public bool getDamage(int damage)
     {
         score += damage;
+
+        StartCoroutine("waitForDamage", damage);
+
         if (score < 0) score = 0;
         if (score > maxHP) dead = true;
         if (!dead)
@@ -66,5 +71,14 @@ public class PlayerStateManager : MonoBehaviour {
             gameObject.SetActive(false);
         }
         return dead;
+    }
+
+    private IEnumerator waitForDamage(int damage)
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        GameObject effect = Instantiate(damageEffect, playerPos.transform.position, playerPos.transform.rotation) as GameObject;
+
+        Destroy(effect, 1.0f);
     }
 }
