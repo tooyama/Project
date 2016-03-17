@@ -17,6 +17,8 @@ public class SHManeger : MonoBehaviour {
 
     public GameObject nextFaze;
 
+    public GameObject textBox;
+
 	public GameObject d4,d6,diceButton,PlayerPanels,Monster,EffectPanels,Enemy,buttonPanel,character,buttonPrefab;
 
     public Camera mainCamera,subCamera;
@@ -112,6 +114,7 @@ public class SHManeger : MonoBehaviour {
 
     void setStage()
     {
+        textBox.GetComponent<TextBox>().ChangeText("GameStart !!!");
 		/* カードのシャッフル */
 		randomize (stages);
 		randomize (greenCards);
@@ -671,6 +674,12 @@ public class SHManeger : MonoBehaviour {
 		drawButtons.SetActive (false);
 
 		greens [greenCards [greenCount]].SetActive (true);
+
+        StartCoroutine(WaitForDrawGreenCard(greens[greenCards[greenCount]]));
+    }
+
+    public void drawGreenCard2()
+    {
 		/* オババカードを送る相手を選択*/
         if (mainPlayer)
         {
@@ -1015,17 +1024,26 @@ public class SHManeger : MonoBehaviour {
 		/* 時空の扉からのドロー時の処理 */
 		drawButtons.SetActive (false);
         Debug.Log("Draw White Card No." + (whiteCards[whiteCount] + 1));
-        if (whites[whiteCards[whiteCount]] != null) whites[whiteCards[whiteCount]].SetActive(true);
-		/* 白カードの各効果 */
-		switch (whiteCards [whiteCount]+1)
+        if (whites[whiteCards[whiteCount]] != null)
+        {
+            whites[whiteCards[whiteCount]].SetActive(true);
+
+            StartCoroutine(WaitForDrawWhiteCard(whites[whiteCards[whiteCount]]));
+        }
+	}
+
+    public void drawWhiteCard2()
+    {
+        /* 白カードの各効果 */
+        switch (whiteCards[whiteCount] + 1)
         {
             case 1:
-            /* 神秘のコンパス */
+                /* 神秘のコンパス */
                 characters[playerId].addEquipment("Compass");
                 drawWhiteCardAfter();
                 break;
             case 2:
-            /* 封印の知恵(もう一度手番を行う) */
+                /* 封印の知恵(もう一度手番を行う) */
                 wisdom = true;
                 drawWhiteCardAfter();
                 break;
@@ -1107,7 +1125,7 @@ public class SHManeger : MonoBehaviour {
                 drawWhiteCardAfter();
                 break;
         }
-	}
+    }
 
     public void drawWhiteCardAfter()
     {
@@ -1131,9 +1149,14 @@ public class SHManeger : MonoBehaviour {
 		
 		blacks [blackCards [blackCount]].SetActive (true);
 
-        Debug.Log("Draw Black Card No." + (blackCards[blackCount] + 1));
+        StartCoroutine(WaitForDrawBlackCard(blacks[blackCards[blackCount]]));
 
-		/* 黒カードの各効果 */
+        Debug.Log("Draw Black Card No." + (blackCards[blackCount] + 1));
+	}
+
+    public void drawBlackCard2()
+    {
+        /* 黒カードの各効果 */
         switch (blackCards[blackCount] + 1)
         {
             case 1:
@@ -1281,7 +1304,7 @@ public class SHManeger : MonoBehaviour {
                 drawBlackCardAfter();
                 break;
         }
-	}
+    }
 
 	public void drawBlackCardAfter(){
 		blacks [blackCards [blackCount]].SetActive (false);
@@ -2402,6 +2425,45 @@ public class SHManeger : MonoBehaviour {
             GUI.color = this.fadeColor;
             GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
         }
+    }
+
+    private IEnumerator WaitForDrawGreenCard(GameObject card)
+    {
+        yield return new WaitForSeconds(2.0f);
+
+        iTween.ScaleTo(card, iTween.Hash("scale", new Vector3(1, 1, 1), "time", 0.5f));
+
+        yield return new WaitWhile(() => Input.anyKeyDown == false);
+
+        iTween.ScaleTo(card, iTween.Hash("scale", Vector3.zero, "time", 0.5f));
+
+        drawGreenCard2();
+    }
+
+    private IEnumerator WaitForDrawWhiteCard(GameObject card)
+    {
+        yield return new WaitForSeconds(2.0f);
+
+        iTween.ScaleTo(card, iTween.Hash("scale", new Vector3(1, 1, 1), "time", 0.5f));
+
+        yield return new WaitWhile(() => Input.anyKeyDown == false);
+
+        iTween.ScaleTo(card, iTween.Hash("scale", Vector3.zero, "time", 0.5f));
+
+        drawWhiteCard2();
+    }
+
+    private IEnumerator WaitForDrawBlackCard(GameObject card)
+    {
+        yield return new WaitForSeconds(2.0f);
+
+        iTween.ScaleTo(card, iTween.Hash("scale", new Vector3(1, 1, 1), "time", 0.5f));
+
+        yield return new WaitWhile(() => Input.anyKeyDown == false);
+
+        iTween.ScaleTo(card, iTween.Hash("scale", Vector3.zero, "time", 0.5f));
+
+        drawBlackCard2();
     }
 
     private IEnumerator WaitForChangeGame()
