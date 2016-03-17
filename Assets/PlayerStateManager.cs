@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class PlayerStateManager : MonoBehaviour {
@@ -7,6 +8,7 @@ public class PlayerStateManager : MonoBehaviour {
     public bool dead = false;
     public Transform playerPos; 
     public GameObject damageEffect;
+    public GameObject stateUI;
 	int maxHP = 0;
 	GameObject[] HP;
 	// Use this for initialization
@@ -55,6 +57,8 @@ public class PlayerStateManager : MonoBehaviour {
     public bool getDamage(int damage)
     {
         score += damage;
+
+        stateUI.GetComponent<Text>().text = score.ToString();
 
         StartCoroutine("waitForDamage", damage);
 
