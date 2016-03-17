@@ -15,6 +15,8 @@ public class SHManeger : MonoBehaviour {
 
     public GameObject catherine;
 
+    public GameObject nextFaze;
+
 	public GameObject d4,d6,diceButton,PlayerPanels,Monster,EffectPanels,Enemy,buttonPanel,character,buttonPrefab;
 
     public Camera mainCamera,subCamera;
@@ -541,6 +543,8 @@ public class SHManeger : MonoBehaviour {
                 }
                 else
                 {
+                    int oldId = playerId;
+
                     masamune = false;
                     handgun = false;
                     if (!wisdom)
@@ -556,7 +560,14 @@ public class SHManeger : MonoBehaviour {
                         }
                     }
                     wisdom = false;
-                    ChangeGameStatus(-1);
+                    if (oldId == mainPlayerId)
+                    {
+                        ChangeGameStatus(-1);
+                    }
+                    else
+                    {
+                        StartCoroutine("WaitForChangeGame");
+                    }
                 }
 			    break;
 		    case 5:
@@ -1003,8 +1014,8 @@ public class SHManeger : MonoBehaviour {
 	public void drawWhiteCard(){
 		/* 時空の扉からのドロー時の処理 */
 		drawButtons.SetActive (false);
-        Debug.Log("Draw White Card No." + (whiteCards[whiteCount] + 1));		
-		whites [whiteCards [whiteCount]].SetActive (true);
+        Debug.Log("Draw White Card No." + (whiteCards[whiteCount] + 1));
+        if (whites[whiteCards[whiteCount]] != null) whites[whiteCards[whiteCount]].SetActive(true);
 		/* 白カードの各効果 */
 		switch (whiteCards [whiteCount]+1)
         {
@@ -2391,6 +2402,21 @@ public class SHManeger : MonoBehaviour {
             GUI.color = this.fadeColor;
             GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
         }
+    }
+
+    private IEnumerator WaitForChangeGame()
+    {
+        yield return new WaitForSeconds(3.0f);
+
+        iTween.ScaleTo(nextFaze, iTween.Hash("scale", new Vector3(1, 1, 1), "time", 1.0f));
+
+        yield return new WaitWhile( () => Input.anyKeyDown == false);
+
+        //yield return new WaitForSeconds(5.0f);
+
+        iTween.ScaleTo(nextFaze, iTween.Hash("scale", new Vector3(0, 0, 0), "time", 1.0f));
+
+        ChangeGameStatus(-1);
     }
 
     //フェードイン・アウト処理
