@@ -582,6 +582,7 @@ public class SHManeger : MonoBehaviour {
 			    break;
 		    case 5:
 			    Debug.Log ("game finished");
+                LoadLevel("End");
 			    break;
 		}
 	}
@@ -2610,4 +2611,18 @@ public class SHManeger : MonoBehaviour {
              */
         }
 	}
+
+    void LoadLevel(string name)
+    {
+        float time = 0.5f;
+
+        FadeCamera.Instance.FadeOut(time, () =>
+        {
+            Application.LoadLevel(name);
+
+            FadeCamera.Instance.FadeIn(time, () =>
+            {
+            });
+        });
+    }
 }
