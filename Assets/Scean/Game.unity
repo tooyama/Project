@@ -6724,7 +6724,7 @@ MonoBehaviour:
   smokeEffect: {fileID: 169160, guid: 3ac374e36d5005c4db1322ce8f0c397d, type: 2}
   catherine: {fileID: 191948, guid: 55aedaaa1a1a3704aa3bde4a32c2398a, type: 2}
   nextFaze: {fileID: 572327831}
-  textBox: {fileID: 1465160170}
+  textBox: {fileID: 1311595445}
   d4: {fileID: 1670529278}
   d6: {fileID: 267479026}
   diceButton: {fileID: 76298466}

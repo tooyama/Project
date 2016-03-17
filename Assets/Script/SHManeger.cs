@@ -114,7 +114,6 @@ public class SHManeger : MonoBehaviour {
 
     void setStage()
     {
-        textBox.GetComponent<TextBox>().ChangeText("GameStart !!!");
 		/* カードのシャッフル */
 		randomize (stages);
 		randomize (greenCards);
@@ -471,6 +470,7 @@ public class SHManeger : MonoBehaviour {
                 turn++;
                 break;
 		    case 0:
+                textBox.GetComponent<Text>().text = "DiceRoll !!!";
                 /* キャサリンの特殊能力 */
                 if (characters[playerId].reveal && characters[playerId].fullname == CharacterState.CharacterFullName.Catherine)
                 {
