@@ -9,6 +9,10 @@ public class PlayerStateManager : MonoBehaviour {
     public Transform playerPos; 
     public GameObject damageEffect;
     public GameObject stateUI;
+    public GameObject[] equipUI = new GameObject[2];
+    private string name;
+    private GameObject equipState;
+    public int number = 0;
 	int maxHP = 0;
 	GameObject[] HP;
 	// Use this for initialization
@@ -27,12 +31,22 @@ public class PlayerStateManager : MonoBehaviour {
 				}
 			}
 		}
+
+        name = GameObject.Find("Stage").GetComponent<SHManeger>().getName(number).ToString();
+
+        equipState = GameObject.Find(name);
 	}
 	
 	// Update is called once per frame
 	void Update () 
     {
-	        
+        CharacterState equip = equipState.GetComponent<CharacterState>();
+        /*
+	    if(equip.getEquipLength() != 0) 
+        {
+            equipUI[0].GetComponent<Image>().sprite = Resources.Load<Sprite>(equip.getEquipImage(0));
+        }
+        */
 	}
 
 	public int getScore(){

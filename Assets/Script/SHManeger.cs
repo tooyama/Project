@@ -79,6 +79,13 @@ public class SHManeger : MonoBehaviour {
     public Color fadeColor = Color.black;
 //>>>>>>> origin/master
 
+    public CharacterState.CharacterFullName getName(int num)
+    {
+        characters = character.GetComponentsInChildren<CharacterState> ();
+
+        return characters[num].fullname;
+    }
+
 	// Use this for initialization
 	void Start () {
 		setStage ();

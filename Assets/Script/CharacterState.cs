@@ -37,6 +37,16 @@ public class CharacterState : MonoBehaviour
 
     List<string> equipment = new List<string>();
 
+    public int getEquipLength()
+    {
+        return equipment.Count;
+    }
+
+    public string getEquipImage(int num)
+    {
+        return equipment[num];
+    }
+
     public void addEquipment(string equip)
     {
         Debug.Log(fullname + " / " + equip);
