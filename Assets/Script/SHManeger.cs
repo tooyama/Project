@@ -430,6 +430,7 @@ public class SHManeger : MonoBehaviour {
 		gameStatus = status;
 		switch (status) {
             case -1:
+                updateTextBox("Player" + (playerId+1) + "の手番");
                 Debug.Log("Debug predicts");
                 string preH = "",preN="",preS = "";
                 for (int i = 0; i < playerNum; i++)
@@ -470,7 +471,8 @@ public class SHManeger : MonoBehaviour {
                 turn++;
                 break;
 		    case 0:
-                textBox.GetComponent<Text>().text = "DiceRoll !!!";
+//                textBox.GetComponent<Text>().text = "DiceRoll !!!";
+//                updateTextBox("Player" + (playerId+1) + " DiceRoll!");
                 /* キャサリンの特殊能力 */
                 if (characters[playerId].reveal && characters[playerId].fullname == CharacterState.CharacterFullName.Catherine)
                 {
@@ -555,12 +557,17 @@ public class SHManeger : MonoBehaviour {
                         if (characters[playerId].fullname == CharacterState.CharacterFullName.Wight && wightCounter > 0)
                         {
                             wightCounter--;
+                            updateTextBox("Player" + (playerId + 1) + ":ワイトの特殊能力発動");
                         }
                         else
                         {
                             playerId++;
                             playerId = playerId % playerNum;
                         }
+                    }
+                    else
+                    {
+                        updateTextBox("Player" + (playerId + 1) + ":封印の知恵の効果発動");
                     }
                     wisdom = false;
                     if (oldId == mainPlayerId)
@@ -585,13 +592,16 @@ public class SHManeger : MonoBehaviour {
 		switch (moveStatus){
 		case 2:
 		case 3:
+            updateTextBox("Player" + (playerId + 1) + ":老婆の庵に移動");
 			moveStage(0);
 			break;
 		case 4:
 		case 5:
+            updateTextBox("Player" + (playerId + 1) + ":時空の扉に移動");
 			moveStage (1);
 			break;
 		case 6:
+            updateTextBox("Player" + (playerId + 1) + ":教会に移動");
 			moveStage (2);
 			break;
 		case 7:
@@ -602,12 +612,15 @@ public class SHManeger : MonoBehaviour {
             }
 			break;
 		case 8:
+            updateTextBox("Player" + (playerId + 1) + ":共同墓地に移動");
 			moveStage (3);
 			break;
 		case 9:
+            updateTextBox("Player" + (playerId + 1) + ":希望と絶望の森に移動");
 			moveStage(4);
 			break;
 		case 10:
+            updateTextBox("Player" + (playerId + 1) + ":いにしえの祭壇に移動");
 			moveStage (5);
 			break;
 		default:
@@ -695,6 +708,7 @@ public class SHManeger : MonoBehaviour {
 	}
 
 	public void greenCardAction(int pid){
+        updateTextBox("Player" + (playerId + 1) + ":Player"+(pid+1) + "にオババカードを渡す");
         tmppid = pid;
         currentAction = "Green";
         /* オババ効果を予測値に追加 */
@@ -1452,6 +1466,7 @@ public class SHManeger : MonoBehaviour {
             {
                 robeEffect = 1;
             }
+            updateTextBox("Player" + (playerId + 1) + ":Player"+(attackTarget+1) + "に攻撃(" + damage + "ダメージ)");
             Debug.Log("Damage:" + damage + " d6:" + d6Value + " d4:" + d4Value);
             if (damage > 0) damage = damage - robeEffect + characters[playerId].attackPower;
             if (playerStatesM[attackTarget].getDamage(damage)) //攻撃で死んだ場合
@@ -1637,12 +1652,15 @@ public class SHManeger : MonoBehaviour {
         Debug.Log("Machine Gun Start!");
         Debug.Log(attackTargetList);
         bool revengeOccur = false;
+        string targets = "";
+        int damage=0;
         foreach (int target in attackTargetList)
         {
+            targets += target + ",";
             int robeEffect = 0;
             if (target != angelId)
             {
-                int damage = Mathf.Abs(d6Value - d4Value);
+                damage = Mathf.Abs(d6Value - d4Value);
                 if (characters[playerId].findEquipment("Robe") || characters[target].findEquipment("Robe"))
                 {
                     robeEffect = 1;
@@ -1666,6 +1684,7 @@ public class SHManeger : MonoBehaviour {
                 }
             }
         }
+        updateTextBox("Player" + (playerId + 1) + ":Player" + targets + "に攻撃(" + damage + "ダメージ)");
         if (revengeOccur)
         {
             revengeReady(attackTarget, playerId);
@@ -1726,12 +1745,14 @@ public class SHManeger : MonoBehaviour {
         Debug.Log("id:" + id + " selectingAction:" + selectingAction);
 		switch (selectingAction) {
 		    case "bigspider":
+                updateTextBox("Player" + (playerId + 1) + ":血に飢えた大蜘蛛でPlayer"+(id+1) + "を選択");
 			    buttonPanel.SetActive (false);
                 playerStatesM[id].getDamage(2);
                 playerStatesM[playerId].getDamage(2);
 			    drawBlackCardAfter ();
 			    break;
 		    case "bat":
+                updateTextBox("Player" + (playerId + 1) + ":吸血コウモリでPlayer"+(id+1) + "を選択");
 			    buttonPanel.SetActive (false);
                 playerStatesM[id].getDamage(2);
                 playerStatesM[playerId].getDamage(-1);
@@ -1742,42 +1763,51 @@ public class SHManeger : MonoBehaviour {
 			    greenCardAction (id);
 			    break;
             case "benefit":
+                updateTextBox("Player" + (playerId + 1) + ":恩恵でPlayer"+(id+1) + "を選択");
                 tmppid = id;
                 diceAction = "benefit";
 			    dicesActivate (true);
                 break;
             case "George":
+                updateTextBox("Player" + (playerId + 1) + ":Georgeの特殊効果でPlayer"+(id+1) + "を選択");
                 tmppid = id;
                 diceAction = "George";
                 buttonPanel.SetActive(true);
 			    dicesActivate (true);
                 break;
             case "Fuka":
+                updateTextBox("Player" + (playerId + 1) + ":Fukaの特殊効果でPlayer"+(id+1) + "を選択");
                 playerStatesM[id].moveScore(7);
                 ChangeGameStatus(0);
                 break;
             case "hopeAndDespair":
+                updateTextBox("Player" + (playerId + 1) + ":希望と絶望の森でPlayer"+(id+1) + "を選択");
                 tmppid = id;
                 hopeAndDespairSelect();
                 break;
             case "Aid":
+                updateTextBox("Player" + (playerId + 1) + ":応急手当でPlayer"+(id+1) + "を選択");
                 playerStatesM[id].moveScore(7);
                 drawWhiteCardAfter();
                 break;
             case "doll":
+                updateTextBox("Player" + (playerId + 1) + ":呪いの人形でPlayer"+(id+1) + "を選択");
                 tmppid = id;
                 diceAction = "doll";
                 dicesActivate(true);
                 break;
             case "banana":
+                updateTextBox("Player" + (playerId + 1) + ":バナナの皮でPlayer"+(id+1) + "を選択");
                 tmppid = id;
                 equipHandoffSelect(true);
                 break;
             case "devil":
+                updateTextBox("Player" + (playerId + 1) + ":気まぐれな小悪魔でPlayer"+(id+1) + "を選択");
                 tmppid = id;
                 equipHandoffSelect(false);
                 break;
             case "Alter":
+                updateTextBox("Player" + (playerId + 1) + ":いにしえの祭壇でPlayer"+(id+1) + "を選択");
                 tmppid = id;
                 equipHandoffSelect(false);
                 break;
@@ -1849,24 +1879,30 @@ public class SHManeger : MonoBehaviour {
                 switch (d4Value + d6Value)
                 {
                     case 2: case 3:
+                        updateTextBox("Player" + (playerId + 1) + ":ダイナマイトで老婆の庵に3ダメージ");
                         area = 0;
                         break;
                     case 4: case 5:
+                        updateTextBox("Player" + (playerId + 1) + ":ダイナマイトで時空の扉に3ダメージ");
                         area = 1;
                         break;
                     case 6:
+                        updateTextBox("Player" + (playerId + 1) + ":ダイナマイトで教会に3ダメージ");
                         area = 2;
                         break;
                     case 7:
                         area = -1;
                         break;
                     case 8:
+                        updateTextBox("Player" + (playerId + 1) + ":ダイナマイトで共同墓地に3ダメージ");
                         area = 3;
                         break;
                     case 9:
+                        updateTextBox("Player" + (playerId + 1) + ":ダイナマイトで希望と絶望の森に3ダメージ");
                         area = 4;
                         break;
                     case 10:
+                        updateTextBox("Player" + (playerId + 1) + ":ダイナマイトでいにしえの祭壇に3ダメージ");
                         area = 5;
                         break;
                 }
@@ -1929,6 +1965,7 @@ public class SHManeger : MonoBehaviour {
                 {
                     if (compass_first == -1)
                     {
+                        updateTextBox("Player" + (playerId + 1) + ":神秘のコンパスの効果発動");
                         compass_first = d6Value + d4Value;
                         dicesActivate(true);
                     }
@@ -2479,6 +2516,23 @@ public class SHManeger : MonoBehaviour {
         iTween.ScaleTo(nextFaze, iTween.Hash("scale", new Vector3(0, 0, 0), "time", 1.0f));
 
         ChangeGameStatus(-1);
+    }
+
+    void updateTextBox(string str)
+    {
+        string[] lists = textBox.GetComponent<Text>().text.Split('\n');
+        Debug.Log("Update Text Box");
+        Debug.Log(lists);
+        Debug.Log(lists.Length);
+        string newText = "";
+        int start = 0;
+        if (lists.Length >= 3) start = 1;
+        for (int i = start; i < lists.Length; i++)
+        {
+            newText += lists[i] + "\n";
+        }
+        newText += str;
+        textBox.GetComponent<Text>().text = newText;
     }
 
     //フェードイン・アウト処理
